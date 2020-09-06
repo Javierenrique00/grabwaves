@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">solosonido</string>
+
+    //--- main fragment
+    <string name="serverUrl">http://192.168.0.68:2000</string>
+    <string name="checkBt">Probar</string>
+</resources>
