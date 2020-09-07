@@ -1,7 +1,8 @@
 <resources>
-    <string name="app_name">solosonido</string>
+    <string name="app_name">GrabWaves</string>
 
     //--- main fragment
+    <string name="TitleMain">Conexión: http://[Servidor]:[puerto]</string>
     <string name="serverUrl">http://192.168.0.68:2000</string>
     <string name="checkBt">Probar</string>
 </resources>

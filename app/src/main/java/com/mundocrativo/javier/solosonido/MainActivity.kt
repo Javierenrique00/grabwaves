@@ -27,6 +27,7 @@ class MainActivity : AppCompatActivity() {
         val enlace = extras?.getString(Intent.EXTRA_TEXT)
         enlace?.let {
             Log.v("msg","Enlace = $it")
+
             viewModel.enlaceExternal = it
         }
 
