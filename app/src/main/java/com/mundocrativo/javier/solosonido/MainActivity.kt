@@ -21,17 +21,25 @@ class MainActivity : AppCompatActivity() {
                     .replace(R.id.container, MainFragment.newInstance())
                     .commitNow()
         }
+        Log.v("msg","From onCreate")
+        getDataFromIntent()
+    }
 
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        Log.v("msg","From new Intent")
+        getDataFromIntent()
+    }
+
+    fun getDataFromIntent(){
         //--- trae el dato del enlace
         val extras = intent.extras
         val enlace = extras?.getString(Intent.EXTRA_TEXT)
         enlace?.let {
             Log.v("msg","Enlace = $it")
-
             viewModel.enlaceExternal = it
         }
-
-
     }
+
 
 }

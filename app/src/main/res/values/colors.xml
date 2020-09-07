@@ -1,6 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#6200EE</color>
-    <color name="colorPrimaryDark">#3700B3</color>
-    <color name="colorAccent">#03DAC5</color>
+
+    <color name="ColorBarraPrincipalApp">@color/azul05</color>
+    <color name="ColorBarraComplementoApp">@color/azul08</color>
+    <color name="ColorFondoApp">@color/yellow02</color>
+    <color name="ColorTextoApp">@color/black09</color>
+    <color name="ColorIconLine">@color/black09</color>
+    <color name="ColorIconLineInverse">@color/white02</color>
+    <color name="ColorBackgroundIcon">@color/yellow02</color>
+    <color name="ColorResaltado">@color/red05</color>
+
+
+
+    <color name="yellow02">#fff5d6</color>
+
+    <color name="azul05">#88dce7</color>
+    <color name="azul08">#114d55</color>
+
+    <color name="red05">#fe0b0b</color>
+
+    <color name="black05">#30304b</color>
+    <color name="black09">#131316</color>
+
+    <color name="white02">#f4f4f8</color>
+
+
 </resources>

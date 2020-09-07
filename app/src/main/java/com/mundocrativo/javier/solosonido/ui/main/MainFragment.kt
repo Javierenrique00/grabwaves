@@ -38,10 +38,16 @@ class MainFragment : Fragment() {
         val view = inflater.inflate(R.layout.main_fragment, container, false)
 
         view.checkServerBt.setOnClickListener {
-            revizaServer(serverTb.text.toString(),"https://www.youtube.com/watch?v=kA9voL0edJU")
+            revizaServer(serverTb.text.toString(),"https://www.youtube.com/watch?v=kA9voL0edJU",false)
         }
 
         view.serverTb.addTextChangedListener(tw)
+
+        view.qualitySw.setOnCheckedChangeListener { compoundButton, b ->
+            //Log.v("msg","Cambio el estado del switch a:$b")
+            pref.hQ = b
+            showCalidadSw(b)
+        }
 
         return view
     }
@@ -59,20 +65,22 @@ class MainFragment : Fragment() {
         //-- trae las preferencias hacia el display
         serverTb.setText(pref.server)
         checkFormulary()
+        qualitySw.isChecked = pref.hQ
 
         val enlace = viewModel.enlaceExternal
         if(enlace==null){
             Log.v("msg","----> No hay link")
         } else{
             Log.v("msg","----> opening link: $enlace")
-            revizaServer(serverTb.text.toString(),enlace)
+            revizaServer(serverTb.text.toString(),enlace,pref.hQ)
             viewModel.enlaceExternal = null
         }
     }
 
-    fun revizaServer(server:String,videoLetras:String) {
+    fun revizaServer(server:String,videoLetras:String,hQ:Boolean) {
         val videoBase64 = Util.convStringToBase64(videoLetras)
-        val ruta = server + "/?link="+videoBase64
+        val quality = if(hQ) "hq" else "lq"
+        val ruta = server + "/?link="+videoBase64+"&q=$quality"
         Log.v("msg","Contactando streaming:$ruta")
 
         launchNavigator(ruta)
@@ -85,6 +93,9 @@ class MainFragment : Fragment() {
         startActivity(intent)
     }
 
+    fun showCalidadSw(estado:Boolean){
+        qualitySw.text = if(estado) getString(R.string.swTextHq) else getString(R.string.swTextLq)
+    }
 
     fun checkFormulary():Boolean{
         val isOk = checkAddress()

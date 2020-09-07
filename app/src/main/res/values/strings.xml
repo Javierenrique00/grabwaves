@@ -5,4 +5,7 @@
     <string name="TitleMain">Conexión: http://[Servidor]:[puerto]</string>
     <string name="serverUrl">http://192.168.0.68:2000</string>
     <string name="checkBt">Probar</string>
+    <string name="swTextHq">Max calidad</string>
+    <string name="swTextLq">Min calidad</string>
+
 </resources>

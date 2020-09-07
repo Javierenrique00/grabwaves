@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="ColorBarraPrincipalApp">@color/azul05</color>
+    <color name="ColorBarraComplementoApp">@color/azul08</color>
+    <color name="ColorFondoApp">@color/black05</color>
+    <color name="ColorTextoApp">@color/white02</color>
+    <color name="ColorIconLine">@color/white02</color>
+    <color name="ColorIconLineInverse">@color/black05</color>
+    <color name="ColorBackgroundIcon">@color/black05</color>
+    <color name="ColorResaltado">@color/red05</color>
+
+</resources>
