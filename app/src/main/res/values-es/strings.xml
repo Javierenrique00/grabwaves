@@ -1,2 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <string name="app_name">GrabWaves</string>
+    <string name="swTextLq">Min calidad</string>
+    <string name="swTextHq">Max calidad</string>
+    <string name="checkBt">Prueba</string>
+    <string name="serverUrl">http://192.168.0.68:2000</string>
+    <string name="TitleMain">Conexión: http://[Servidor]:[puerto]</string>
+    <string name="hintPasteTb">Pegar enlace</string>
+    <string name="pasteBt">Pegar</string>
+</resources>

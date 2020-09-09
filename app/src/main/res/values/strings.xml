@@ -1,11 +1,14 @@
 <resources>
-    <string name="app_name">GrabWaves</string>
 
     //--- main fragment
     <string name="TitleMain">Conexión: http://[Servidor]:[puerto]</string>
-    <string name="serverUrl">http://192.168.0.68:2000</string>
-    <string name="checkBt">Probar</string>
+    <string name="checkBt">Prueba</string>
     <string name="swTextHq">Max calidad</string>
     <string name="swTextLq">Min calidad</string>
+    <string name="app_name">GrabWaves</string>
+    <string name="serverUrl">http://192.168.0.68:2000</string>
+
+    <string name="pasteBt">Pegar</string>
+    <string name="hintPasteTb">Pegar enlace</string>
 
 </resources>
