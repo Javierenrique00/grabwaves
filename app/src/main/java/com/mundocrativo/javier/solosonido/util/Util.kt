@@ -67,4 +67,20 @@ object Util {
         return salida
     }
 
+    fun genHashFromString(inStr:String):Long{
+        if(inStr.contentEquals("")) return -1L
+        val charPool : List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
+        var result = 0L
+        var potencia = 1L
+        inStr.forEach {
+            var indice = charPool.indexOf(it).toLong()
+            if(indice<0L) indice = it.toLong()
+            result+=indice*potencia
+            potencia = potencia*charPool.size
+            if(potencia>(Long.MAX_VALUE/potencia)) potencia = 1
+        }
+        return  result
+    }
+
+
 }

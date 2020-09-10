@@ -11,4 +11,7 @@
     <string name="pasteBt">Pegar</string>
     <string name="hintPasteTb">Pegar enlace</string>
 
+    //--- Video item recyclerview
+    <string name="titleIndefined">-----------</string>
+
 </resources>

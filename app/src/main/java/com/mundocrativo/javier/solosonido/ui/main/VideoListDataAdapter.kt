@@ -4,11 +4,13 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import coil.load
 import com.mundocrativo.javier.solosonido.R
 import com.mundocrativo.javier.solosonido.model.VideoObj
 import com.mundocrativo.javier.solosonido.util.Util
@@ -36,6 +38,25 @@ class VideoListDataAdapter(val context: Context,val event:MutableLiveData<VideoL
             if(item.esSelected) backColor = R.color.ColorResaltado
             holder.layout.setBackgroundColor(context.getColor(backColor))
 
+            //--para preguntar por el info del video
+            if(!item.esInfoReady){
+                event.value = VideoListEvent.OnItemGetInfo(position,item)
+            }else{
+                holder.title.text = item.title
+                holder.channel.text = item.channel
+                //holder.thumbnail.load(item.thumbnailUrl)
+            }
+
+            //--para preguntar si tiene cargado el thumbnail del video
+            if(!item.esUrlReady){
+                holder.thumbnail.setImageDrawable(context.resources.getDrawable(R.drawable.ic_baseline_ondemand_video_24))
+            }else{
+                holder.thumbnail.setImageDrawable(item.thumbnailImg)
+            }
+
+
+
+
         }
     }
 
@@ -44,6 +65,9 @@ class VideoListDataAdapter(val context: Context,val event:MutableLiveData<VideoL
         var viewUrl : TextView = root.urlTt
         var deltaTime : TextView = root.deltaTimeTb
         var layout : ConstraintLayout = root.videoLayout
+        var title : TextView = root.titleTt
+        var channel : TextView = root.channelTt
+        var thumbnail : ImageView = root.videoThumbnail
     }
 
 

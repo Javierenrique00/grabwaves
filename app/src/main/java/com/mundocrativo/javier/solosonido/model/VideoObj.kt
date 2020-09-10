@@ -1,5 +1,7 @@
 package com.mundocrativo.javier.solosonido.model
 
+import android.graphics.drawable.Drawable
+import android.widget.ImageView
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
@@ -17,7 +19,9 @@ data class VideoObj(
     var timestamp:Long,
     @Ignore var esInfoReady:Boolean,
     @Ignore var esUrlReady:Boolean,
-    @Ignore var esSelected:Boolean
+    @Ignore var esSelected:Boolean,
+    @Ignore var itemPosition:Int,
+    @Ignore var thumbnailImg:Drawable?
 ){
-    constructor() : this(0,"","","","",0,0,0,0L,false,false,false)
+    constructor() : this(0,"","","","",0,0,0,0L,false,false,false,0,null)
 }

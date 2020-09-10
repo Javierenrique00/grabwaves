@@ -6,6 +6,12 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
+    <ImageView
+        android:id="@+id/videoThumbnail"
+        android:layout_width="160dp"
+        android:layout_height="90dp"
+        app:srcCompat="@drawable/ic_baseline_ondemand_video_24" />
+
     <TextView
         android:id="@+id/urlTt"
         android:layout_width="0dp"
@@ -15,7 +21,7 @@
         android:layout_marginEnd="8dp"
         android:text="TextView"
         app:layout_constraintEnd_toStartOf="@+id/deltaTimeTb"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/videoThumbnail"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
@@ -26,4 +32,24 @@
         android:text="TextView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/titleTt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="@string/titleIndefined"
+        app:layout_constraintStart_toEndOf="@+id/videoThumbnail"
+        app:layout_constraintTop_toBottomOf="@id/urlTt" />
+
+    <TextView
+        android:id="@+id/channelTt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="@string/titleIndefined"
+        app:layout_constraintStart_toEndOf="@+id/videoThumbnail"
+        app:layout_constraintTop_toBottomOf="@id/titleTt" />
 </androidx.constraintlayout.widget.ConstraintLayout>
