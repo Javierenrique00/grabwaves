@@ -2,6 +2,8 @@ package com.mundocrativo.javier.solosonido
 
 import android.app.Application
 import androidx.room.Room
+import com.mundocrativo.javier.solosonido.com.CacheStrDao
+import com.mundocrativo.javier.solosonido.com.DirectCache
 import com.mundocrativo.javier.solosonido.db.DataDatabase
 import com.mundocrativo.javier.solosonido.db.VideoDao
 import com.mundocrativo.javier.solosonido.rep.AppRepository
@@ -24,18 +26,33 @@ val appModule = module {
         return database.videoDao
     }
 
+    fun provideCacheStrDao(database: DataDatabase):CacheStrDao {
+        return database.cacheStrDao
+    }
+
     //--- instancia de la base de datos
     single { provideDatabase(androidApplication()) }
 
     //--- instancia VideoDao
     single { provideVideoDao(get()) }
 
+    //--- instancia CacheStrDao
+    single { provideCacheStrDao(get()) }
 
-    fun provideAppRepository(videoDao: VideoDao):AppRepository {
-        return AppRepository(videoDao)
+
+    fun provideDirectCache(cacheStrDao: CacheStrDao):DirectCache{
+        return DirectCache(cacheStrDao)
     }
 
-    single { provideAppRepository(get()) }
+    single { provideDirectCache(get()) }
+
+
+
+    fun provideAppRepository(videoDao: VideoDao,directCache: DirectCache):AppRepository {
+        return AppRepository(videoDao,directCache)
+    }
+
+    single { provideAppRepository(get(),get()) }
 }
 
 val viewModule = module {

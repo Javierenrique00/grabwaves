@@ -89,11 +89,10 @@ class MainFragment : Fragment() {
             videoListDataAdapter.notifyDataSetChanged()
         })
 
-//        //--- Cuando cambia un item de la lista SELECTION
-//        viewModel.videoItemChanged.observe(viewLifecycleOwner, Observer {
-//
-//
-//        })
+        //---cuando se quita un item de la lista
+        viewModel.notifyItemRemoved.observe(viewLifecycleOwner, Observer {
+            videoListDataAdapter.notifyItemRemoved(it)
+        })
 
         imageLoader = Coil.imageLoader(context!!)
 
@@ -105,6 +104,10 @@ class MainFragment : Fragment() {
         serverTb.setText(pref.server)
         checkFormulary()
         qualitySw.isChecked = pref.hQ
+
+        //----Inicia el flow
+        setupRecyclerFlow()
+
 
         //--- debe cargar los videos que están en la base de datos
         viewModel.loadVideosFromDb()
@@ -119,10 +122,11 @@ class MainFragment : Fragment() {
         }
     }
 
-//    override fun onPause() {
-//        super.onPause()
-//        videoInfoApi.acaba()
-//    }
+    override fun onPause() {
+        super.onPause()
+        videoInfoApi.acaba()
+        itemChangeApi.acaba()
+    }
 
 
     fun revizaServer(server:String,videoLetras:String,hQ:Boolean,addDb:Boolean) {
@@ -194,8 +198,7 @@ class MainFragment : Fragment() {
         if(!enlaceLetras.isEmpty()) revizaServer(serverTb.text.toString(),enlaceLetras,pref.hQ,true)
     }
 
-    private fun setupVideoListRecyclerAdapter(){
-
+    private fun setupRecyclerFlow(){
         //---inicia los eventos del flow del video
         videoInfoApi = VideoInfoApi()
         val flujoVideo = flowFromVideo(videoInfoApi).buffer(Channel.UNLIMITED).map { viewModel.getUrlInfo(it,transUrlToServInfo(it.url)) }
@@ -244,7 +247,10 @@ class MainFragment : Fragment() {
 
             }
         }
+    }
 
+
+    private fun setupVideoListRecyclerAdapter(){
 
 
         val itemDecoration = DividerItemDecoration(context, DividerItemDecoration.VERTICAL)
@@ -252,6 +258,7 @@ class MainFragment : Fragment() {
         itemDecoration.setDrawable(draw!!)
         videoRv.addItemDecoration(itemDecoration)
 
+        itemTouchHelper.attachToRecyclerView(videoRv) //--para el touch swipe
         videoListDataAdapter = VideoListDataAdapter(context!!)
         videoRv.layoutManager = LinearLayoutManager(context)
         videoRv.adapter = videoListDataAdapter
@@ -267,6 +274,14 @@ class MainFragment : Fragment() {
                     val dataWithPosition = it.item
                     dataWithPosition.itemPosition = it.position
                     videoInfoApi.genera(dataWithPosition)
+                }
+                is VideoListEvent.OnStartDrag ->{
+                    itemTouchHelper.startDrag(it.viewHolder)
+                }
+                is VideoListEvent.OnSwipeRight ->{
+                    Log.v("msg","Recibe evento para borrar por swipe---------==>${it.id}")
+                    val urlInfo = transUrlToServInfo(it.url)
+                    viewModel.deleteVideoListElement(it.id,urlInfo)
                 }
             }
         })

@@ -26,11 +26,12 @@ class VideoInfoApi {
     }
 
     fun genera(entrada: VideoObj){
-        callBack!!.onNextValue(entrada)
+        callBack?.onNextValue(entrada)
     }
 
     fun acaba(){
-        callBack!!.onCompleted()
+        callBack?.onCompleted()
+        unregister()
     }
 }
 

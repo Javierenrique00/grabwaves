@@ -2,16 +2,19 @@ package com.mundocrativo.javier.solosonido.ui.main
 
 import android.util.Log
 import com.mundocrativo.javier.solosonido.model.VideoObj
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.sendBlocking
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import java.lang.Exception
+import java.util.concurrent.CancellationException
 
 class ItemChangeApi {
     interface Callback{
         fun onNextValue(value: Pair<Int,VideoObj>)
         fun onCompleted()
+        fun onApiError(causa:Throwable)
     }
 
     private var callBack : Callback? = null
@@ -25,12 +28,14 @@ class ItemChangeApi {
     }
 
     fun genera(entrada: Pair<Int,VideoObj>){
-        callBack!!.onNextValue(entrada)
+        callBack?.onNextValue(entrada)
     }
 
     fun acaba(){
-        callBack!!.onCompleted()
+        callBack?.onCompleted()
+        unregister()
     }
+
 }
 
 fun flowFromItem(api:ItemChangeApi): Flow<Pair<Int,VideoObj>> = callbackFlow {
@@ -41,6 +46,10 @@ fun flowFromItem(api:ItemChangeApi): Flow<Pair<Int,VideoObj>> = callbackFlow {
             } catch (e: Exception){
                 Log.v("msg","--Error in flow: $e")
             }
+        }
+
+        override fun onApiError(causa: Throwable) {
+
         }
 
         override fun onCompleted() {

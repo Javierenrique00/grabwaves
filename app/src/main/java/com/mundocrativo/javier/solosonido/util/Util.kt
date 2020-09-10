@@ -8,7 +8,11 @@ object Util {
 
     fun convStringToBase64(texto:String):String{
         val data = texto.toByteArray()
-        return Base64.encodeToString(data,DEFAULT)
+        //return Base64.encodeToString(data,DEFAULT)
+        val base64Valor = Base64.encodeToString(data,DEFAULT)
+        val remplazo1= base64Valor.replace("/","-")
+        val remplazo2= remplazo1.replace("+","_")
+        return remplazo2
     }
 
     fun calcDeltaTiempo(time1:Long,time2:Long):String{

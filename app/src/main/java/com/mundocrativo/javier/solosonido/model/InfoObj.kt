@@ -9,7 +9,7 @@ data class InfoObj(
     val thumbnailUrl : String,
     val width : Int,
     val height : Int,
-    val duration : Int ,
+    val duration : Int,
     val related : List<Related>
 )
 

@@ -16,8 +16,9 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
 
     var enlaceExternal :String? = null
     val videoListLiveData : MutableLiveData<List<VideoObj>> by lazy { MutableLiveData<List<VideoObj>>() }
-    lateinit var videoLista : List<VideoObj>
+    lateinit var videoLista : MutableList<VideoObj>
     //val videoItemChanged : MutableLiveData<Pair<Int,VideoObj>> by lazy { MutableLiveData<Pair<Int,VideoObj>>() }
+    val notifyItemRemoved : MutableLiveData<Int> by lazy { MutableLiveData<Int>() }
 
     fun insertNewVideo(url:String) =  viewModelScope.launch(Dispatchers.IO){
         Log.v("msg","Inserting video to the database")
@@ -28,7 +29,7 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
     }
 
     fun loadVideosFromDb() = viewModelScope.launch(Dispatchers.IO){
-        videoLista = appRepository.videoDao.traeVideos()
+        videoLista = appRepository.listVideos().toMutableList()
         videoListLiveData.postValue(videoLista)
     }
 
@@ -53,6 +54,16 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
             )
         }
         return null
+    }
+
+    fun deleteVideoListElement(id:Long,urlInfo:String)=viewModelScope.launch(Dispatchers.IO){
+        appRepository.deleteVideo(id,urlInfo)
+        val index = videoLista.indexOfFirst { it.id==id }
+        if(index>=0){
+            Log.v("msg","---Removiendo de la lista index=$index and id=$id del cache:$urlInfo")
+            videoLista.removeAt(index)
+            notifyItemRemoved.postValue(index)
+        }
     }
 
 }

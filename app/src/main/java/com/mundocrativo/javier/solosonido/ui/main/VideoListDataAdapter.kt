@@ -1,7 +1,9 @@
 package com.mundocrativo.javier.solosonido.ui.main
 
 import android.content.Context
+import android.util.Log
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -21,7 +23,16 @@ class VideoListDataAdapter(val context: Context,val event:MutableLiveData<VideoL
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VideoListViewHolder {
         val inflater = LayoutInflater.from(parent.context)
-        return VideoListViewHolder(inflater.inflate(R.layout.video_list_recycler_item,parent,false))
+        val viewHolder = VideoListViewHolder(inflater.inflate(R.layout.video_list_recycler_item,parent,false),event)
+
+        //--- detecta el touch sobre el icono para iniciar el scroll
+        viewHolder.itemView.videoThumbnail.setOnTouchListener { view, motionEvent ->
+            if(motionEvent.actionMasked == MotionEvent.ACTION_DOWN){
+                event.value = VideoListEvent.OnStartDrag(viewHolder)
+            }
+            return@setOnTouchListener true
+        }
+        return viewHolder
     }
 
     override fun onBindViewHolder(holder: VideoListViewHolder, position: Int) {
@@ -54,20 +65,26 @@ class VideoListDataAdapter(val context: Context,val event:MutableLiveData<VideoL
                 holder.thumbnail.setImageDrawable(item.thumbnailImg)
             }
 
-
-
+            //--para cargar id de la base de datos en el campo idDbField que es un dummy
+            holder.idDbField.text = item.id.toString()
 
         }
     }
 
 
-    class VideoListViewHolder(root: View) : RecyclerView.ViewHolder(root){
+
+    class VideoListViewHolder(root: View,val event: MutableLiveData<VideoListEvent>) : RecyclerView.ViewHolder(root){
         var viewUrl : TextView = root.urlTt
         var deltaTime : TextView = root.deltaTimeTb
         var layout : ConstraintLayout = root.videoLayout
         var title : TextView = root.titleTt
         var channel : TextView = root.channelTt
         var thumbnail : ImageView = root.videoThumbnail
+        var idDbField : TextView = root.idDbField
+
+        fun swipeRight(){
+            event.value = VideoListEvent.OnSwipeRight(idDbField.text.toString().toLong(),viewUrl.text.toString())
+        }
     }
 
 

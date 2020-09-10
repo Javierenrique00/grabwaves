@@ -1,0 +1,68 @@
+package com.mundocrativo.javier.solosonido.ui.main
+
+import android.util.Log
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.ItemTouchHelper.*
+import androidx.recyclerview.widget.RecyclerView
+
+//---https://medium.com/@yfujiki/drag-and-reorder-recyclerview-items-in-a-user-friendly-manner-1282335141e9
+val itemTouchHelper by lazy {
+    // 1. Note that I am specifying all 4 directions.
+    //    Specifying START and END also allows
+    //    more organic dragging than just specifying UP and DOWN.
+    val simpleItemTouchCallback =
+        object : ItemTouchHelper.SimpleCallback(0, RIGHT) {
+
+            override fun onMove(recyclerView: RecyclerView,
+                                viewHolder: RecyclerView.ViewHolder,
+                                target: RecyclerView.ViewHolder): Boolean {
+
+                val adapter = recyclerView.adapter as VideoListDataAdapter
+                val from = viewHolder.adapterPosition
+                val to = target.adapterPosition
+                // 2. Update the backing model. Custom implementation in
+                //    MainRecyclerViewAdapter. You need to implement
+                //    reordering of the backing model inside the method.
+                //adapter.moveItem(from, to) todo se quitó porque no estmos moviendo las casillas unas sobre las otras.
+                // 3. Tell adapter to render the model update.
+                adapter.notifyItemMoved(from, to)
+
+                return true
+            }
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder,
+                                  direction: Int) {
+                // 4. Code block for horizontal swipe.
+                //    ItemTouchHelper handles horizontal swipe as well, but
+                //    it is not relevant with reordering. Ignoring here.
+                // Log.v("msg","Swipe to the right") --> todo si hace el swipe to the right
+                if(direction== RIGHT){
+                    val hv = viewHolder as VideoListDataAdapter.VideoListViewHolder
+                    hv.swipeRight()
+                }
+            }
+
+            //--- para detectar que se seleccion
+            override fun onSelectedChanged(
+                viewHolder: RecyclerView.ViewHolder?,
+                actionState: Int
+            ) {
+                super.onSelectedChanged(viewHolder, actionState)
+
+                if(actionState == ACTION_STATE_DRAG){
+                    viewHolder?.itemView?.alpha = 0.5f
+                }
+
+            }
+
+            override fun clearView(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder
+            ) {
+                super.clearView(recyclerView, viewHolder)
+
+                viewHolder.itemView.alpha = 1.0f
+            }
+        }
+
+    ItemTouchHelper(simpleItemTouchCallback)
+}

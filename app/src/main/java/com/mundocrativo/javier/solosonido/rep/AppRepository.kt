@@ -1,6 +1,7 @@
 package com.mundocrativo.javier.solosonido.rep
 
 import android.util.Log
+import com.mundocrativo.javier.solosonido.com.DirectCache
 import com.mundocrativo.javier.solosonido.db.VideoDao
 import com.mundocrativo.javier.solosonido.model.InfoObj
 import com.mundocrativo.javier.solosonido.model.Related
@@ -8,13 +9,14 @@ import com.mundocrativo.javier.solosonido.model.VideoObj
 import com.mundocrativo.javier.solosonido.util.OkGetFileUrl
 import com.mundocrativo.javier.solosonido.util.Util
 import com.squareup.moshi.Moshi
+import retrofit2.Retrofit
+import java.lang.Exception
 
 
-class AppRepository(val videoDao: VideoDao) {
+class AppRepository(private val videoDao: VideoDao,private val directCache: DirectCache) {
     val moshi = Moshi.Builder().build()
     val infoAdapter = moshi.adapter(InfoObj::class.java)
-    //val relatedAdapter = moshi.adapter(Related::class.java)
-    private val cacheInfoUrl = mutableMapOf<Long,String>()
+
 
 
     fun listVideos():List<VideoObj>{
@@ -25,20 +27,25 @@ class AppRepository(val videoDao: VideoDao) {
         videoDao.insert(item)
     }
 
-    fun getInfoFromUrl(url:String):InfoObj?{
-        var hashUrl = Util.genHashFromString(url)
-        var datos : String? = null
-        Log.v("msg","Buscando INFO url=$url")
-        if(!cacheInfoUrl.containsKey(hashUrl)) {
-            datos = OkGetFileUrl.traeWebString(url)
-            if(datos!=null) cacheInfoUrl[hashUrl] = datos
-        }else{
-            datos = cacheInfoUrl[hashUrl]
-            Log.v("msg","Datos en el cache ${datos!!.length}")
-        }
-        datos?.let {
+    fun deleteVideo(key:Long,urlInfo:String){
+        videoDao.delete(key)
+        directCache.sacaDelCache(urlInfo)
+    }
 
-            return infoAdapter.fromJson(it)
+    fun getInfoFromUrl(url:String):InfoObj?{
+        var resultado : InfoObj? = null
+
+        val strResult = directCache.trae(url)
+
+        strResult?.let {
+            try {
+                resultado = infoAdapter.fromJson(it)
+            }catch (e:Exception){
+                Log.e("msg","Error en la conversion Moshi ${e.message}")
+            }finally {
+                return resultado
+            }
+
         }
         return null
     }
