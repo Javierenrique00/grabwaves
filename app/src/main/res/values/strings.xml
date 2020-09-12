@@ -12,6 +12,13 @@
     <string name="hintPasteTb">Pegar enlace</string>
 
     //--- Video item recyclerview
+
+    //--- Menu
+    <string name="configMenu">Config</string>
+
+    //--- Config Fragment
+    <string name="configTitle">Configuración</string>
     <string name="titleIndefined">-----------</string>
+
 
 </resources>

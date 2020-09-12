@@ -7,53 +7,14 @@
     android:layout_height="match_parent"
     tools:context=".ui.main.MainFragment">
 
-    <TextView
-        android:id="@+id/infoText"
-        android:layout_width="wrap_content"
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/app_bar2"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:text="@string/TitleMain"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/qualitySw" />
+        app:layout_constraintTop_toTopOf="parent"
+        style="@style/ToolbarApp" />
 
-    <EditText
-        android:id="@+id/serverTb"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="2dp"
-        android:layout_marginEnd="16dp"
-        android:ems="10"
-        android:hint="@string/serverUrl"
-        android:imeOptions="actionDone"
-        android:inputType="text"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/infoText" />
-
-    <Button
-        android:id="@+id/checkServerBt"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:text="@string/checkBt"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/serverTb" />
-
-    <Switch
-        android:id="@+id/qualitySw"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:text="@string/swTextLq"
-        android:textOff="@string/swTextLq"
-        android:textOn="@string/swTextHq"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/versionTt"
@@ -63,7 +24,9 @@
         android:layout_marginEnd="16dp"
         android:text="TextView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/app_bar2" />
+
+
 
     <EditText
         android:id="@+id/enlaceTb"
@@ -77,7 +40,7 @@
         android:inputType="textPersonName"
         app:layout_constraintEnd_toStartOf="@+id/pasteBt"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/checkServerBt" />
+        app:layout_constraintTop_toBottomOf="@+id/app_bar2" />
 
     <Button
         android:id="@+id/pasteBt"
@@ -87,7 +50,7 @@
         android:layout_marginEnd="16dp"
         android:text="@string/pasteBt"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/checkServerBt" />
+        app:layout_constraintTop_toBottomOf="@+id/app_bar2" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/videoRv"

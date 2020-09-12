@@ -1,11 +1,10 @@
-package com.mundocrativo.javier.solosonido
+package com.mundocrativo.javier.solosonido.ui.main
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import com.mundocrativo.javier.solosonido.ui.main.MainFragment
-import com.mundocrativo.javier.solosonido.ui.main.MainViewModel
+import com.mundocrativo.javier.solosonido.R
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : AppCompatActivity() {

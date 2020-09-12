@@ -11,10 +11,9 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.view.*
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -23,7 +22,7 @@ import coil.ImageLoader
 import coil.request.ImageRequest
 import com.mundocrativo.javier.solosonido.BuildConfig
 import com.mundocrativo.javier.solosonido.R
-import com.mundocrativo.javier.solosonido.model.VideoObj
+import com.mundocrativo.javier.solosonido.ui.config.ConfigActivity
 import com.mundocrativo.javier.solosonido.util.AppPreferences
 import com.mundocrativo.javier.solosonido.util.Util
 import kotlinx.android.synthetic.main.main_fragment.*
@@ -51,29 +50,45 @@ class MainFragment : Fragment() {
     private lateinit var imageLoader : ImageLoader
 
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
         val view = inflater.inflate(R.layout.main_fragment, container, false)
 
-        view.checkServerBt.setOnClickListener {
-            revizaServer(serverTb.text.toString(),"https://www.youtube.com/watch?v=kA9voL0edJU",false,false)
-        }
+
 
         view.pasteBt.setOnClickListener {
             loadPasteText()
         }
 
-        view.serverTb.addTextChangedListener(tw)
+        //--setup the action bar !  Para el menu
+        (activity as AppCompatActivity).setSupportActionBar(view.app_bar2)
 
-        view.qualitySw.setOnCheckedChangeListener { compoundButton, b ->
-            //Log.v("msg","Cambio el estado del switch a:$b")
-            pref.hQ = b
-            showCalidadSw(b)
-        }
 
         return view
     }
+
+    //--- Para el menu
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.principal_menu,menu)
+        super.onCreateOptionsMenu(menu, inflater)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when(item.itemId){
+            R.id.menuLogin ->{
+                launchConfigActivity()
+            }
+        }
+
+
+        return super.onOptionsItemSelected(item)
+    }
+
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
@@ -100,11 +115,6 @@ class MainFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        //-- trae las preferencias hacia el display
-        serverTb.setText(pref.server)
-        checkFormulary()
-        qualitySw.isChecked = pref.hQ
-
         //----Inicia el flow
         setupRecyclerFlow()
 
@@ -117,7 +127,10 @@ class MainFragment : Fragment() {
             Log.v("msg","----> No hay link")
         } else{
             Log.v("msg","----> opening link: $enlace")
-            revizaServer(serverTb.text.toString(),enlace,pref.hQ,true)
+            val urlToPlay = Util.createUrlConnectionStringPlay(pref.server!!,enlace,pref.hQ)
+            viewModel.insertNewVideo(enlace)
+            launchNavigator(urlToPlay)
+
             viewModel.enlaceExternal = null
         }
     }
@@ -129,19 +142,9 @@ class MainFragment : Fragment() {
     }
 
 
-    fun revizaServer(server:String,videoLetras:String,hQ:Boolean,addDb:Boolean) {
-        val videoBase64 = Util.convStringToBase64(videoLetras)
-        val quality = if(hQ) "hq" else "lq"
-        val ruta = server + "/?link="+videoBase64+"&q=$quality"
-        Log.v("msg","Contactando streaming:$ruta")
-        if(addDb) viewModel.insertNewVideo(videoLetras)
-        launchNavigator(ruta)
-        //playMedia(ruta)
-    }
-
     fun transUrlToServInfo(url:String):String{
         val videoBase64 = Util.convStringToBase64(url)
-        val ruta = serverTb.text.toString() + "/info/?link=" +videoBase64
+        val ruta = pref.server + "/info/?link=" +videoBase64
         return ruta
     }
 
@@ -151,36 +154,6 @@ class MainFragment : Fragment() {
         startActivity(intent)
     }
 
-    fun showCalidadSw(estado:Boolean){
-        qualitySw.text = if(estado) getString(R.string.swTextHq) else getString(R.string.swTextLq)
-    }
-
-    fun checkFormulary():Boolean{
-        val isOk = checkAddress()
-        checkServerBt.isEnabled = isOk
-        return isOk
-    }
-
-    fun checkAddress():Boolean{
-        val text = serverTb.text.toString()
-        return !text.isEmpty()
-    }
-
-
-    val tw = object : TextWatcher{
-        override fun afterTextChanged(p0: Editable?) {
-        }
-
-        override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-        }
-
-        override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-            pref.server = serverTb.text.toString()
-            checkFormulary()
-            Log.v("msg","textBox=${pref.server}")
-        }
-
-    }
 
     //---https://stackoverflow.com/questions/19177231/android-copy-paste-from-clipboard-manager
     fun loadPasteText(){
@@ -195,7 +168,11 @@ class MainFragment : Fragment() {
             enlaceLetras = item.text.toString()
             enlaceTb.setText(enlaceLetras)
         }
-        if(!enlaceLetras.isEmpty()) revizaServer(serverTb.text.toString(),enlaceLetras,pref.hQ,true)
+        if(!enlaceLetras.isEmpty()) {
+            val urlToPlay = Util.createUrlConnectionStringPlay(pref.server!!,enlaceLetras,pref.hQ)
+            viewModel.insertNewVideo(enlaceLetras)
+            launchNavigator(urlToPlay)
+        }
     }
 
     private fun setupRecyclerFlow(){
@@ -268,7 +245,8 @@ class MainFragment : Fragment() {
                     val itemSelected = it.item
                     itemSelected.esSelected = true
                     itemChangeApi.genera(Pair(it.position,itemSelected))
-                    revizaServer(serverTb.text.toString(),it.item.url,pref.hQ,false)
+                    val urlToPlay = Util.createUrlConnectionStringPlay(pref.server!!,it.item.url,pref.hQ)
+                    launchNavigator(urlToPlay)
                 }
                 is VideoListEvent.OnItemGetInfo ->{
                     val dataWithPosition = it.item
@@ -287,9 +265,16 @@ class MainFragment : Fragment() {
         })
     }
 
-
+    fun launchConfigActivity(){
+        val valor = "datos"
+        val intent = Intent(context, ConfigActivity::class.java ).apply {
+            putExtra("mensaje",valor)
+        }
+        startActivity(intent)
+    }
 
     fun playMedia(ruta:String){
+
         val mediaPlayer: MediaPlayer? = MediaPlayer().apply {
             setAudioAttributes(
                 AudioAttributes.Builder()

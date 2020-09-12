@@ -11,8 +11,8 @@ android {
         applicationId "com.mundocrativo.javier.solosonido"
         minSdkVersion 24
         targetSdkVersion 29
-        versionCode 14
-        versionName "1.4"
+        versionCode 15
+        versionName "1.5"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -80,5 +80,13 @@ dependencies {
     //--- para usar retrofit con OKhttp y moshi
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation "com.squareup.retrofit2:converter-moshi:2.9.0"
+
+    //--- para poder usar media del supporting library
+    implementation 'androidx.media2:media2-session:1.0.3'
+    implementation 'androidx.media2:media2-widget:1.0.3'
+    implementation 'androidx.media2:media2-player:1.0.3'
+
+    //--- Hay que poner el material design para el menu
+    implementation 'com.google.android.material:material:1.2.0'
 
 }

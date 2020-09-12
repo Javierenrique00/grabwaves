@@ -8,4 +8,7 @@
     <string name="TitleMain">Conexion: http://[Server]:[port]</string>
     <string name="hintPasteTb">Paste link</string>
     <string name="pasteBt">Paste</string>
+    <string name="titleIndefined">-----------</string>
+    <string name="configTitle">Configuration</string>
+    <string name="configMenu">Config</string>
 </resources>

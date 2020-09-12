@@ -2,6 +2,7 @@ package com.mundocrativo.javier.solosonido.util
 
 import android.util.Base64.DEFAULT
 import android.util.Base64
+import android.util.Log
 import java.util.*
 
 object Util {
@@ -85,6 +86,17 @@ object Util {
         }
         return  result
     }
+
+    fun createUrlConnectionStringPlay(server:String,videoLetras:String,hQ:Boolean):String {
+        val videoBase64 = Util.convStringToBase64(videoLetras)
+        val quality = if(hQ) "hq" else "lq"
+        val ruta = server + "/?link="+videoBase64+"&q=$quality"
+        Log.v("msg","Contactando streaming:$ruta")
+        return ruta
+        //launchNavigator(ruta)
+        //playMedia(ruta)
+    }
+
 
 
 }
