@@ -1,6 +1,5 @@
-package com.mundocrativo.javier.solosonido.ui.main
+package com.mundocrativo.javier.solosonido.ui.historia
 
-import android.util.Log
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.*
 import androidx.recyclerview.widget.RecyclerView

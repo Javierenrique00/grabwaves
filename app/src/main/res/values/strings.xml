@@ -20,5 +20,12 @@
     <string name="configTitle">Configuración</string>
     <string name="titleIndefined">-----------</string>
 
+    //--- Main Fragment
+    <string name="tab0">Historia</string>
+    <string name="tab1">Buscar</string>
+
+    //---- Search Fragment
+    <string name="searchtbhint">Buscar</string>
+
 
 </resources>

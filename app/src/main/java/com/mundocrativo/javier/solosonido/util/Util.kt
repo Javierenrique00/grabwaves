@@ -97,6 +97,13 @@ object Util {
         //playMedia(ruta)
     }
 
+    fun createUrlConnectionStringSearch(server:String,searchLetras:String,limit:Int):String {
+        val videoBase64 = convStringToBase64(searchLetras)
+        val ruta = server + "/search/?question="+videoBase64+"&limit=$limit"
+        Log.v("msg","Buscando:$ruta")
+        return ruta
+    }
+
 
 
 }

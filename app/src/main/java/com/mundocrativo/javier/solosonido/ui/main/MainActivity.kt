@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import com.mundocrativo.javier.solosonido.R
+import com.mundocrativo.javier.solosonido.ui.historia.HistoriaFragment
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : AppCompatActivity() {
@@ -36,7 +37,7 @@ class MainActivity : AppCompatActivity() {
         val enlace = extras?.getString(Intent.EXTRA_TEXT)
         enlace?.let {
             Log.v("msg","Enlace = $it")
-            viewModel.enlaceExternal = it
+            viewModel.openVideoUrlLink(it)
         }
     }
 

@@ -1,4 +1,4 @@
-package com.mundocrativo.javier.solosonido.ui.main
+package com.mundocrativo.javier.solosonido.ui.historia
 
 import androidx.recyclerview.widget.RecyclerView
 import com.mundocrativo.javier.solosonido.model.VideoObj

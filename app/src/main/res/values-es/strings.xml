@@ -11,4 +11,7 @@
     <string name="titleIndefined">-----------</string>
     <string name="configTitle">Configuración</string>
     <string name="configMenu">Config</string>
+    <string name="tab0">Historia</string>
+    <string name="tab1">Buscar</string>
+    <string name="searchtbhint">Buscar</string>
 </resources>

@@ -1,10 +1,12 @@
 package com.mundocrativo.javier.solosonido.rep
 
 import android.util.Log
+import androidx.lifecycle.MutableLiveData
 import com.mundocrativo.javier.solosonido.com.DirectCache
 import com.mundocrativo.javier.solosonido.db.VideoDao
 import com.mundocrativo.javier.solosonido.model.InfoObj
 import com.mundocrativo.javier.solosonido.model.Related
+import com.mundocrativo.javier.solosonido.model.SearchObj
 import com.mundocrativo.javier.solosonido.model.VideoObj
 import com.mundocrativo.javier.solosonido.util.OkGetFileUrl
 import com.mundocrativo.javier.solosonido.util.Util
@@ -16,6 +18,8 @@ import java.lang.Exception
 class AppRepository(private val videoDao: VideoDao,private val directCache: DirectCache) {
     val moshi = Moshi.Builder().build()
     val infoAdapter = moshi.adapter(InfoObj::class.java)
+    val searchAdapter = moshi.adapter(SearchObj::class.java)
+    val openVideoUrlLiveData : MutableLiveData<String> by lazy { MutableLiveData<String>() }
 
 
 
@@ -50,5 +54,51 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
         return null
     }
 
+    fun getSearchFromUrl(url:String):List<VideoObj>{
+        var searchObj :SearchObj? = null
+        val strResult = directCache.trae(url)
+        var resultado = mutableListOf<VideoObj>()
+        strResult?.let{
+            try {
+                searchObj = searchAdapter.fromJson(strResult)
+                resultado.addAll(convertSearhToVideoList(searchObj!!))
+            }catch (e:Exception){
+                Log.e("msg","Error en la conversion Moshi del search ${e.message}")
+            }finally {
+                return resultado
+            }
+
+        }
+        return resultado
+    }
+
+
+    private fun convertSearhToVideoList(searchObj: SearchObj):List<VideoObj>{
+        val resultList = mutableListOf<VideoObj>()
+
+        searchObj.items.forEach {
+            resultList.add(VideoObj(
+                0,
+                it.link?:"",
+                it.title?:"",
+                it.author?.name?:"",
+                it.thumbnail,
+                0,
+                0,
+                0,
+                0,
+                false,
+                false,
+                false,
+                0,
+                null
+            ))
+        }
+        return  resultList
+    }
+
+    fun openVideoUrl(url:String){
+        openVideoUrlLiveData.postValue(url)
+    }
 
 }

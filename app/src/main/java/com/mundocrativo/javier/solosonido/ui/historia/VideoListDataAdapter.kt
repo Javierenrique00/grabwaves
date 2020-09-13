@@ -1,7 +1,6 @@
-package com.mundocrativo.javier.solosonido.ui.main
+package com.mundocrativo.javier.solosonido.ui.historia
 
 import android.content.Context
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -12,23 +11,31 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import coil.load
 import com.mundocrativo.javier.solosonido.R
 import com.mundocrativo.javier.solosonido.model.VideoObj
 import com.mundocrativo.javier.solosonido.util.Util
 import com.soywiz.klock.DateTime
 import kotlinx.android.synthetic.main.video_list_recycler_item.view.*
 
-class VideoListDataAdapter(val context: Context,val event:MutableLiveData<VideoListEvent> = MutableLiveData()) : ListAdapter<VideoObj, VideoListDataAdapter.VideoListViewHolder>(VideoListDiffCallback()){
+class VideoListDataAdapter(val context: Context,val event:MutableLiveData<VideoListEvent> = MutableLiveData()) : ListAdapter<VideoObj, VideoListDataAdapter.VideoListViewHolder>(
+    VideoListDiffCallback()
+){
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VideoListViewHolder {
         val inflater = LayoutInflater.from(parent.context)
-        val viewHolder = VideoListViewHolder(inflater.inflate(R.layout.video_list_recycler_item,parent,false),event)
+        val viewHolder =
+            VideoListViewHolder(
+                inflater.inflate(R.layout.video_list_recycler_item, parent, false),
+                event
+            )
 
         //--- detecta el touch sobre el icono para iniciar el scroll
         viewHolder.itemView.videoThumbnail.setOnTouchListener { view, motionEvent ->
             if(motionEvent.actionMasked == MotionEvent.ACTION_DOWN){
-                event.value = VideoListEvent.OnStartDrag(viewHolder)
+                event.value =
+                    VideoListEvent.OnStartDrag(
+                        viewHolder
+                    )
             }
             return@setOnTouchListener true
         }
@@ -41,7 +48,11 @@ class VideoListDataAdapter(val context: Context,val event:MutableLiveData<VideoL
             holder.deltaTime.text = Util.calcDeltaTiempo(item.timestamp/1000,DateTime.nowUnixLong()/1000)
 
             holder.layout.setOnClickListener {
-                event.value = VideoListEvent.OnItemClick(position,item)
+                event.value =
+                    VideoListEvent.OnItemClick(
+                        position,
+                        item
+                    )
             }
 
             //--- pone el color del fondo
@@ -51,7 +62,11 @@ class VideoListDataAdapter(val context: Context,val event:MutableLiveData<VideoL
 
             //--para preguntar por el info del video
             if(!item.esInfoReady){
-                event.value = VideoListEvent.OnItemGetInfo(position,item)
+                event.value =
+                    VideoListEvent.OnItemGetInfo(
+                        position,
+                        item
+                    )
             }else{
                 holder.title.text = item.title
                 holder.channel.text = item.channel
@@ -83,7 +98,11 @@ class VideoListDataAdapter(val context: Context,val event:MutableLiveData<VideoL
         var idDbField : TextView = root.idDbField
 
         fun swipeRight(){
-            event.value = VideoListEvent.OnSwipeRight(idDbField.text.toString().toLong(),viewUrl.text.toString())
+            event.value =
+                VideoListEvent.OnSwipeRight(
+                    idDbField.text.toString().toLong(),
+                    viewUrl.text.toString()
+                )
         }
     }
 

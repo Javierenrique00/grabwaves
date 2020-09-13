@@ -12,6 +12,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
+import com.mundocrativo.javier.solosonido.BuildConfig
 import com.mundocrativo.javier.solosonido.R
 import com.mundocrativo.javier.solosonido.ui.main.MainViewModel
 import com.mundocrativo.javier.solosonido.util.AppPreferences
@@ -62,6 +63,8 @@ class ConfigFragment : Fragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         //viewModel = ViewModelProviders.of(this).get(ConfigViewModel::class.java)
+
+        versionTt.text = "V:${BuildConfig.VERSION_NAME}"
 
         pref = AppPreferences(context!!)
 

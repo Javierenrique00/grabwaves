@@ -14,7 +14,8 @@ import kotlinx.coroutines.launch
 
 class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
 
-    var enlaceExternal :String? = null
+    //var enlaceExternal :String? = null
+    val openVideoUrlLiveData = appRepository.openVideoUrlLiveData
     val videoListLiveData : MutableLiveData<List<VideoObj>> by lazy { MutableLiveData<List<VideoObj>>() }
     lateinit var videoLista : MutableList<VideoObj>
     //val videoItemChanged : MutableLiveData<Pair<Int,VideoObj>> by lazy { MutableLiveData<Pair<Int,VideoObj>>() }
@@ -64,6 +65,10 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
             videoLista.removeAt(index)
             notifyItemRemoved.postValue(index)
         }
+    }
+
+    fun openVideoUrlLink(url:String){
+        appRepository.openVideoUrl(url)
     }
 
 }
