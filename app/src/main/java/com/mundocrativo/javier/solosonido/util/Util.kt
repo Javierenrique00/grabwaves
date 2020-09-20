@@ -1,8 +1,13 @@
 package com.mundocrativo.javier.solosonido.util
 
+import android.content.Context
+import android.graphics.Bitmap
 import android.util.Base64.DEFAULT
 import android.util.Base64
 import android.util.Log
+import androidx.core.graphics.drawable.toBitmap
+import coil.Coil
+import coil.request.ImageRequest
 import java.util.*
 
 object Util {
@@ -102,6 +107,15 @@ object Util {
         val ruta = server + "/search/?question="+videoBase64+"&limit=$limit"
         Log.v("msg","Buscando:$ruta")
         return ruta
+    }
+
+    suspend fun getBitmap(url:String,context:Context):Bitmap?{
+        val imageLoader = Coil.imageLoader(context)
+        val request = ImageRequest.Builder(context)
+            .data(url)
+            .build()
+        val bitmap = imageLoader.execute(request).drawable?.toBitmap(160,90)
+        return bitmap
     }
 
 

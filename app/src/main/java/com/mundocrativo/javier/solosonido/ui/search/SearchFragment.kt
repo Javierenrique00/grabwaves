@@ -8,6 +8,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
@@ -17,6 +18,7 @@ import coil.Coil
 import coil.ImageLoader
 import coil.request.ImageRequest
 import com.mundocrativo.javier.solosonido.R
+import com.mundocrativo.javier.solosonido.library.MediaHelper
 import com.mundocrativo.javier.solosonido.ui.historia.ItemChangeApi
 import com.mundocrativo.javier.solosonido.ui.historia.VideoInfoApi
 import com.mundocrativo.javier.solosonido.ui.historia.flowFromItem
@@ -27,9 +29,12 @@ import com.mundocrativo.javier.solosonido.util.Util.createUrlConnectionStringSea
 import kotlinx.android.synthetic.main.search_fragment.*
 import kotlinx.android.synthetic.main.search_fragment.view.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
 
@@ -74,7 +79,7 @@ class SearchFragment : Fragment() {
         pref = AppPreferences(context!!)
 
         searchTextApi = SearchTextApi()
-        val searchTextFlow = flowFromString(searchTextApi).sample(1500)
+        val searchTextFlow = flowFromString(searchTextApi).debounce(1000) //--sample
 
         lifecycleScope.launch {
             searchTextFlow.collect{ value ->
@@ -167,7 +172,16 @@ class SearchFragment : Fragment() {
         searchListAdapter.event.observe(viewLifecycleOwner, Observer {
             when(it){
                 is SearchListEvent.OnItemClick ->{
-                    viewModel.openVideoUrlLink(it.item.url)
+                    //viewModel.openVideoUrlLink(it.item.url)
+                    dialogItemCola(it.item.url)
+                    val selecItem = it.item
+                    selecItem.esSelected = true
+                    itemChangeApi.genera(Pair(it.position,selecItem))
+                    MainScope().launch {
+                        delay(100)
+                        selecItem.esSelected = false
+                        itemChangeApi.genera(Pair(it.position,selecItem))
+                    }
                 }
                 is SearchListEvent.OnItemGetThumbnail ->{
                     val item = it.item
@@ -180,6 +194,17 @@ class SearchFragment : Fragment() {
 
     }
 
+    fun dialogItemCola(originalUrl:String){
+        val builder = AlertDialog.Builder(context!!)
+            .setTitle(getString(R.string.titlequeue))
+            .setMessage(getString(R.string.messageQueue))
+            .setPositiveButton(getString(R.string.queueAdd)) { p0, p1 -> viewModel.openVideoUrlLink(MediaHelper.QUEUE_ADD,originalUrl) }
+            .setNeutralButton(getString(R.string.queueNext)) { p0, p1 -> viewModel.openVideoUrlLink(MediaHelper.QUEUE_NEXT,originalUrl) }
+            .setNegativeButton(getString(R.string.queueNew)) { p0, p1 -> viewModel.openVideoUrlLink(MediaHelper.QUEUE_NEW,originalUrl) }
 
+        val dialog =builder.create()
+
+        dialog.show()
+    }
 
 }

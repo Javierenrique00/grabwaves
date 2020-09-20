@@ -14,4 +14,5 @@
     <string name="tab0">Historia</string>
     <string name="tab1">Buscar</string>
     <string name="searchtbhint">Buscar</string>
+    <string name="tab2">Reproductor</string>
 </resources>

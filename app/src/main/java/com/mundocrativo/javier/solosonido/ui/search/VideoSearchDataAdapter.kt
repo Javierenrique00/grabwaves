@@ -41,6 +41,11 @@ class VideoSearchDataAdapter(val context:Context,val event:MutableLiveData<Searc
                 event.value = SearchListEvent.OnItemClick(position,item)
             }
 
+            //--- pone el color del fondo
+            var backColor = R.color.ColorFondoApp
+            if(item.esSelected) backColor = R.color.ColorSelectfondo
+            holder.layout.setBackgroundColor(context.getColor(backColor))
+
         }
 
     }

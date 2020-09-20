@@ -57,7 +57,7 @@ class VideoListDataAdapter(val context: Context,val event:MutableLiveData<VideoL
 
             //--- pone el color del fondo
             var backColor = R.color.ColorFondoApp
-            if(item.esSelected) backColor = R.color.ColorResaltado
+            if(item.esSelected) backColor = R.color.ColorSelectfondo
             holder.layout.setBackgroundColor(context.getColor(backColor))
 
             //--para preguntar por el info del video

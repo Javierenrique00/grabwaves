@@ -21,7 +21,7 @@ data class VideoSearch(
     val thumbnail : String,
     val author : Author?,
     val description : String?,
-    val views : Int?,
+    val views : Long?,
     val duration : String?,
     val uploaded_at : String?
 

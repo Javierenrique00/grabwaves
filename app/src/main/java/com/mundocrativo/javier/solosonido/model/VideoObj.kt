@@ -21,7 +21,8 @@ data class VideoObj(
     @Ignore var esUrlReady:Boolean,
     @Ignore var esSelected:Boolean,
     @Ignore var itemPosition:Int,
-    @Ignore var thumbnailImg:Drawable?
+    @Ignore var thumbnailImg:Drawable?,
+    @Ignore var esPlaying:Boolean
 ){
-    constructor() : this(0,"","","","",0,0,0,0L,false,false,false,0,null)
+    constructor() : this(0,"","","","",0,0,0,0L,false,false,false,0,null,false)
 }

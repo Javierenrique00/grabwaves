@@ -70,6 +70,7 @@ class MainFragment : Fragment() {
             tab.text = when(position){
                 0 -> getString(R.string.tab0)
                 1 -> getString(R.string.tab1)
+                2 -> getString(R.string.tab2)
                 else -> getString(R.string.tab0)
             }
         }.attach()

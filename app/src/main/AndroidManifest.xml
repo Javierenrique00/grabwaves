@@ -3,6 +3,7 @@
     package="com.mundocrativo.javier.solosonido">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:name=".MyApp"
@@ -33,6 +34,13 @@
         <activity android:name=".ui.config.ConfigActivity"
             android:theme="@style/AppTheme">
         </activity>
+
+        <service android:name=".service.MusicService">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
+        </service>
 
     </application>
 

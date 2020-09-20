@@ -3,6 +3,7 @@ package com.mundocrativo.javier.solosonido.ui.historia
 import android.content.ClipDescription.MIMETYPE_TEXT_PLAIN
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.MediaPlayer
@@ -10,6 +11,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -21,6 +23,7 @@ import coil.ImageLoader
 import coil.request.ImageRequest
 import com.mundocrativo.javier.solosonido.BuildConfig
 import com.mundocrativo.javier.solosonido.R
+import com.mundocrativo.javier.solosonido.library.MediaHelper
 import com.mundocrativo.javier.solosonido.ui.config.ConfigActivity
 import com.mundocrativo.javier.solosonido.ui.main.*
 import com.mundocrativo.javier.solosonido.util.AppPreferences
@@ -28,13 +31,11 @@ import com.mundocrativo.javier.solosonido.util.Util
 import kotlinx.android.synthetic.main.historia_fragment.*
 import kotlinx.android.synthetic.main.historia_fragment.view.*
 import kotlinx.android.synthetic.main.main_fragment.view.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 
 class HistoriaFragment : Fragment() {
@@ -85,10 +86,14 @@ class HistoriaFragment : Fragment() {
         })
 
         viewModel.openVideoUrlLiveData.observe(viewLifecycleOwner, Observer {
-            Log.v("msg","OPEN video $it")
-            val urlToPlay = Util.createUrlConnectionStringPlay(pref.server!!,it,pref.hQ)
-            viewModel.insertNewVideo(it)
-            launchNavigator(urlToPlay)
+            Log.v("msg","OPEN video ${it.second}")
+            val urlToPlay = Util.createUrlConnectionStringPlay(pref.server!!,it.second,pref.hQ)
+            viewModel.insertNewVideo(it.second)
+            if(it.first!=MediaHelper.QUEUE_NO_PLAY){
+                viewModel.launchPlayer(it.first,urlToPlay,transUrlToServInfo(it.second),it.second,context!!)
+            }
+            //launchNavigator(urlToPlay)
+            //viewModel.launchPlayer(urlToPlay,transUrlToServInfo(it),it,context!!)
         })
 
 
@@ -118,11 +123,11 @@ class HistoriaFragment : Fragment() {
         return ruta
     }
 
-    fun launchNavigator(ruta:String){
-        val intent = Intent(Intent.ACTION_VIEW)
-        intent.data = Uri.parse(ruta)
-        startActivity(intent)
-    }
+//    fun launchNavigator(ruta:String){
+//        val intent = Intent(Intent.ACTION_VIEW)
+//        intent.data = Uri.parse(ruta)
+//        startActivity(intent)
+//    }
 
 
     //---https://stackoverflow.com/questions/19177231/android-copy-paste-from-clipboard-manager
@@ -141,7 +146,8 @@ class HistoriaFragment : Fragment() {
         if(!enlaceLetras.isEmpty()) {
             val urlToPlay = Util.createUrlConnectionStringPlay(pref.server!!,enlaceLetras,pref.hQ)
             viewModel.insertNewVideo(enlaceLetras)
-            launchNavigator(urlToPlay)
+            //viewModel.launchPlayer(urlToPlay,transUrlToServInfo(enlaceLetras),enlaceLetras,context!!)
+            //launchNavigator(urlToPlay)
         }
     }
 
@@ -189,14 +195,14 @@ class HistoriaFragment : Fragment() {
         lifecycleScope.launch(Dispatchers.Main) {
             flujoItem.collect{
 
-                Log.v("msg","---Item cambiado pos=${it.first} videoTitle=${it.second.title}")
+                Log.v("msg","---Item cambiado pos=${it.first} videoTitle=${it.second.title} selected=${it.second.esSelected}")
                 viewModel.videoLista[it.first].title = it.second.title
                 viewModel.videoLista[it.first].channel = it.second.channel
                 viewModel.videoLista[it.first].thumbnailUrl = it.second.thumbnailUrl
                 viewModel.videoLista[it.first].esInfoReady = it.second.esInfoReady
                 viewModel.videoLista[it.first].esUrlReady = it.second.esUrlReady
                 viewModel.videoLista[it.first].thumbnailImg = it.second.thumbnailImg
-
+                viewModel.videoLista[it.first].esSelected = it.second.esSelected
                 videoListDataAdapter.notifyItemChanged(it.first,it.second)
 
             }
@@ -223,7 +229,13 @@ class HistoriaFragment : Fragment() {
                     itemSelected.esSelected = true
                     itemChangeApi.genera(Pair(it.position,itemSelected))
                     val urlToPlay = Util.createUrlConnectionStringPlay(pref.server!!,it.item.url,pref.hQ)
-                    launchNavigator(urlToPlay)
+                    dialogItemCola(urlToPlay,transUrlToServInfo(it.item.url),it.item.url)//-- es el dialogo para el play a la cola
+                    MainScope().launch {
+                        delay(100)
+                        itemSelected.esSelected = false
+                        itemChangeApi.genera(Pair(it.position,itemSelected))
+                    }
+                    //launchNavigator(urlToPlay)
                 }
                 is VideoListEvent.OnItemGetInfo ->{
                     val dataWithPosition = it.item
@@ -257,5 +269,17 @@ class HistoriaFragment : Fragment() {
         }
     }
 
+    fun dialogItemCola(mediaUrl: String,infoUrl:String,originalUrl:String){
+        val builder = AlertDialog.Builder(context!!)
+            .setTitle(getString(R.string.titlequeue))
+            .setMessage(getString(R.string.messageQueue))
+            .setPositiveButton(getString(R.string.queueAdd)) { p0, p1 -> viewModel.launchPlayer(MediaHelper.QUEUE_ADD,mediaUrl,infoUrl,originalUrl,context!!) }
+            .setNeutralButton(getString(R.string.queueNext)) { p0, p1 -> viewModel.launchPlayer(MediaHelper.QUEUE_NEXT,mediaUrl,infoUrl,originalUrl,context!!) }
+            .setNegativeButton(getString(R.string.queueNew)) { p0, p1 -> viewModel.launchPlayer(MediaHelper.QUEUE_NEW,mediaUrl,infoUrl,originalUrl,context!!) }
+
+        val dialog =builder.create()
+
+        dialog.show()
+    }
 
 }

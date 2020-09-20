@@ -5,21 +5,18 @@ import androidx.lifecycle.MutableLiveData
 import com.mundocrativo.javier.solosonido.com.DirectCache
 import com.mundocrativo.javier.solosonido.db.VideoDao
 import com.mundocrativo.javier.solosonido.model.InfoObj
-import com.mundocrativo.javier.solosonido.model.Related
 import com.mundocrativo.javier.solosonido.model.SearchObj
 import com.mundocrativo.javier.solosonido.model.VideoObj
-import com.mundocrativo.javier.solosonido.util.OkGetFileUrl
-import com.mundocrativo.javier.solosonido.util.Util
+import com.mundocrativo.javier.solosonido.service.MusicServiceConnection
 import com.squareup.moshi.Moshi
-import retrofit2.Retrofit
 import java.lang.Exception
 
 
-class AppRepository(private val videoDao: VideoDao,private val directCache: DirectCache) {
+class AppRepository(private val videoDao: VideoDao,private val directCache: DirectCache,val musicServiceConnection: MusicServiceConnection) {
     val moshi = Moshi.Builder().build()
     val infoAdapter = moshi.adapter(InfoObj::class.java)
     val searchAdapter = moshi.adapter(SearchObj::class.java)
-    val openVideoUrlLiveData : MutableLiveData<String> by lazy { MutableLiveData<String>() }
+    val openVideoUrlLiveData : MutableLiveData<Pair<Int,String>> by lazy { MutableLiveData<Pair<Int,String>>() }
 
 
 
@@ -53,6 +50,11 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
         }
         return null
     }
+
+    suspend fun suspendGetInfoFromUrl(url: String):InfoObj?{
+        return getInfoFromUrl(url)
+    }
+
 
     fun getSearchFromUrl(url:String):List<VideoObj>{
         var searchObj :SearchObj? = null
@@ -91,14 +93,15 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
                 false,
                 false,
                 0,
-                null
+                null,
+                false
             ))
         }
         return  resultList
     }
 
-    fun openVideoUrl(url:String){
-        openVideoUrlLiveData.postValue(url)
+    fun openVideoUrl(queueCmd:Int,url:String){
+        openVideoUrlLiveData.postValue(Pair(queueCmd,url))
     }
 
 }
