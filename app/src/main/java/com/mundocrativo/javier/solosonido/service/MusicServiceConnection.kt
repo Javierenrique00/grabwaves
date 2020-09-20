@@ -109,7 +109,7 @@ class MusicServiceConnection(val context: Context, serviceComponent: ComponentNa
         }
 
         override fun onQueueChanged(queue: MutableList<MediaSessionCompat.QueueItem>?) {
-            Log.v("msg","(MusicServiceConnection) Queue changed")
+            //Log.v("msg","(MusicServiceConnection) Queue changed")
             queueLiveData.postValue(queue)
         }
 

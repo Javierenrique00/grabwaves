@@ -29,20 +29,20 @@
     <string name="searchtbhint">Buscar</string>
 
     //--- add item Cola messages
-    <string name="queueAdd">Agregar al final</string>
-    <string name="queueNext">Agregar al siguiente</string>
+    <string name="queueNext">Agregar siguiente</string>
     <string name="queueNew">Crear nueva lista</string>
     <string name="titlequeue">Reproducir medio</string>
     <string name="messageQueue">Escoja que quiere hacer con el enlace de audio en la lista de reproducción:</string>
 
 
     <!-- Notificaiton Channel -->
-    <string name="notification_channel">Now Playing</string>
-    <string name="notification_channel_description">Shows what music is currently playing in UAMP</string>
+    <string name="notification_channel">Reproduciendo</string>
+    <string name="notification_channel_description">Muestra que se está reproduciendo en UAMP</string>
 
     <!-- Error messages -->
-    <string name="error_media_not_found">Could not locate requested media.</string>
-    <string name="generic_error">The application has encountered an unexpected error.</string>
+    <string name="error_media_not_found">No se encuentra el medio de reproducción.</string>
+    <string name="generic_error">La applicación encontró un error inesperado.</string>
+    <string name="queueAdd">Agregar al final</string>
 
 
 </resources>

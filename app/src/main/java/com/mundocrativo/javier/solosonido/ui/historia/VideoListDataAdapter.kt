@@ -3,6 +3,7 @@ package com.mundocrativo.javier.solosonido.ui.historia
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.MotionEvent
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -15,6 +16,8 @@ import com.mundocrativo.javier.solosonido.R
 import com.mundocrativo.javier.solosonido.model.VideoObj
 import com.mundocrativo.javier.solosonido.util.Util
 import com.soywiz.klock.DateTime
+import com.soywiz.klock.ISO8601
+import com.soywiz.klock.TimeSpan
 import kotlinx.android.synthetic.main.video_list_recycler_item.view.*
 
 class VideoListDataAdapter(val context: Context,val event:MutableLiveData<VideoListEvent> = MutableLiveData()) : ListAdapter<VideoObj, VideoListDataAdapter.VideoListViewHolder>(
@@ -45,7 +48,8 @@ class VideoListDataAdapter(val context: Context,val event:MutableLiveData<VideoL
     override fun onBindViewHolder(holder: VideoListViewHolder, position: Int) {
         getItem(position).let { item ->
             holder.viewUrl.text = item.url
-            holder.deltaTime.text = Util.calcDeltaTiempo(item.timestamp/1000,DateTime.nowUnixLong()/1000)
+            holder.deltaTime.text = ISO8601.TIME_LOCAL_COMPLETE.format(TimeSpan(item.duration*1000.0))
+            //Log.v("msg","traeinfo: Duration:${item.duration}")
 
             holder.layout.setOnClickListener {
                 event.value =

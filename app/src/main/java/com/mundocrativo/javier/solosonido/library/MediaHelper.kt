@@ -77,7 +77,8 @@ object MediaHelper {
             false,
             0,
             BitmapDrawable(context.resources,mediaItem.description.iconBitmap),
-            false
+            false,
+            ""
         )
     }
 //--- esta es la conversionde mediaItem del android al exoplayer
@@ -167,6 +168,23 @@ object MediaHelper {
         durationLiveData.postValue(Triple(position,contentDuration,index))
     }
 
+//--- Comando para poner pausa / play
+
+    fun cmdPausaPlay(pausaPlay:Int,msc:MusicServiceConnection){
+        val bundle = Bundle()
+        bundle.putInt(CMD_PAUSEPLAY_PARAM,pausaPlay)
+        msc.sendCommand(CMD_PAUSEPLAY,bundle)
+    }
+
+    fun cmdRecPausaPlay(bundle: Bundle):Int{
+        return bundle.getInt(CMD_PAUSEPLAY_PARAM)
+    }
+
+
+
+
+
+
 //----------------------------------------
 
 
@@ -218,5 +236,8 @@ object MediaHelper {
     //--- comando para leer el avance de la cancion
     const val CMD_SEND_PLAY_DURATION = "cmd_play_duration"
 
+    //--- comando para poner pause/play
+    const val CMD_PAUSEPLAY = "cmd_play_pause"
+    const val CMD_PAUSEPLAY_PARAM = "cmd_play_pause_PARAM" //-0 pausa 1-play
 
 }

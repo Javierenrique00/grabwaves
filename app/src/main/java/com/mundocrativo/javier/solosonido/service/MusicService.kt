@@ -52,6 +52,8 @@ import com.google.android.gms.cast.framework.CastContext
 import com.mundocrativo.javier.solosonido.R
 import com.mundocrativo.javier.solosonido.library.MediaHelper
 import com.mundocrativo.javier.solosonido.model.ListaAudioMetadata
+import com.mundocrativo.javier.solosonido.ui.player.PLAYBACK_STATE_PAUSE
+import com.mundocrativo.javier.solosonido.ui.player.PLAYBACK_STATE_PLAY
 import com.mundocrativo.javier.solosonido.util.toMediaSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -218,7 +220,7 @@ open class MusicService : MediaBrowserServiceCompat() {
         parentId: String,
         result: Result<MutableList<MediaBrowserCompat.MediaItem>>
     ) {
-        Log.v(TAG,"--->ParentId=$parentId")
+        //Log.v(TAG,"--->ParentId=$parentId")
 
         result.sendResult(MediaHelper.populateItems())
     }
@@ -231,7 +233,7 @@ open class MusicService : MediaBrowserServiceCompat() {
     ) : TimelineQueueNavigator(mediaSession) {
 
         override fun getMediaDescription(player: Player, windowIndex: Int): MediaDescriptionCompat {
-            Log.v("msg","Buscando media description WindowIndex =$windowIndex")
+            //Log.v("msg","Buscando media description WindowIndex =$windowIndex")
             val mediadesc = exoPlayer.getMediaItemAt(windowIndex).playbackProperties!!.tag as MediaBrowserCompat.MediaItem
             return mediadesc.description
         }
@@ -254,7 +256,7 @@ open class MusicService : MediaBrowserServiceCompat() {
                     PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
 
         override fun onPrepare(playWhenReady: Boolean) {
-            Log.v("msg","--onPrepare inicial cargando media")
+            //Log.v("msg","--onPrepare inicial cargando media")
             val mediaId = MediaHelper.getCurrentMediaId()
             if(mediaId!=null) onPrepareFromMediaId(mediaId,playWhenReady,null)
         }
@@ -264,7 +266,7 @@ open class MusicService : MediaBrowserServiceCompat() {
             playWhenReady: Boolean,
             extras: Bundle?
         ) {
-            Log.v("msg","--preparando el medio to play mediaId=$mediaId  %%%%%%")
+            //Log.v("msg","--preparando el medio to play mediaId=$mediaId  %%%%%%")
             val mediaItem =  MediaHelper.getCurrentMediaItem()
             mediaItem?.let {
                 if(it.mediaId!!.contentEquals(mediaId)){
@@ -300,7 +302,7 @@ open class MusicService : MediaBrowserServiceCompat() {
             extras: Bundle?,
             cb: ResultReceiver?
         ): Boolean {
-            Log.v("msg","LLegó un comando  (Comando) $command")
+            //Log.v("msg","LLegó un comando  (Comando) $command")
             when(command){
                 MediaHelper.CMD_SEND_SONG_METADATA ->{
                     val queueCmd = MediaHelper.cmdRecSongWithMetadataToPlayer(extras!!)
@@ -311,7 +313,10 @@ open class MusicService : MediaBrowserServiceCompat() {
                         val exoItem = MediaHelper.convMediaItemToExoplayer(MediaHelper.getCurrentMediaItem()!!)
                         when(queueCmd){
                             MediaHelper.QUEUE_ADD -> exoPlayer.addMediaItem(exoItem)
-                            MediaHelper.QUEUE_NEXT -> exoPlayer.addMediaItem(exoPlayer.nextWindowIndex,exoItem)
+                            MediaHelper.QUEUE_NEXT ->{
+                                val nextIndex = exoPlayer.nextWindowIndex
+                                if(nextIndex<0) exoPlayer.addMediaItem(exoItem) else exoPlayer.addMediaItem(exoPlayer.nextWindowIndex,exoItem)
+                            }
                         }
 
                     }
@@ -323,7 +328,7 @@ open class MusicService : MediaBrowserServiceCompat() {
                 }
                 MediaHelper.CMD_SEND_MOVE_QUEUE ->{
                     val pair = MediaHelper.cmdRecMoveQueueItem(extras!!)
-                    Log.v("msg","Mover: from${pair.first} to:${pair.second}")
+                    //Log.v("msg","Mover: from${pair.first} to:${pair.second}")
                     exoPlayer.moveMediaItem(pair.first,pair.second)
                 }
                 MediaHelper.CMD_PLAY_AT ->{
@@ -332,6 +337,11 @@ open class MusicService : MediaBrowserServiceCompat() {
                 }
                 MediaHelper.CMD_SEND_PLAY_DURATION ->{
                     MediaHelper.cmdRecPlayDuration(exoPlayer)
+                }
+                MediaHelper.CMD_PAUSEPLAY ->{
+                    val pausaPlay = MediaHelper.cmdRecPausaPlay(extras!!)
+                    if(pausaPlay == PLAYBACK_STATE_PLAY) exoPlayer.play()
+                    if(pausaPlay == PLAYBACK_STATE_PAUSE) exoPlayer.pause()
                 }
 
             }
@@ -365,14 +375,14 @@ open class MusicService : MediaBrowserServiceCompat() {
      */
     private inner class PlayerEventListener : Player.EventListener {
         override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
-            Log.v("msg","Player cambiando de estado $playbackState")
+            //Log.v("msg","Player cambiando de estado $playbackState")
             when (playbackState) {
                 Player.STATE_BUFFERING,
                 Player.STATE_READY -> {
                     notificationManager.showNotificationForPlayer(currentPlayer)
                     if (playbackState == Player.STATE_READY) {
 
-                        Log.v("msg","Estado Ready/buffering")
+                        //Log.v("msg","Estado Ready/buffering")
                         // When playing/paused save the current media item in persistent
                         // storage so that playback can be resumed between device reboots.
                         // Search for "media resumption" for more information.
@@ -387,7 +397,7 @@ open class MusicService : MediaBrowserServiceCompat() {
                     }
                 }
                 else -> {
-                    Log.v("msg","Estado Otro=$playbackState   ended=${Player.STATE_ENDED}  IDLE=${Player.STATE_IDLE}")
+                    //Log.v("msg","Estado Otro=$playbackState   ended=${Player.STATE_ENDED}  IDLE=${Player.STATE_IDLE}")
                     notificationManager.hideNotification()
                 }
             }

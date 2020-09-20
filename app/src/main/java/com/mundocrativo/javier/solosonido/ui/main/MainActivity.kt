@@ -22,13 +22,13 @@ class MainActivity : AppCompatActivity() {
                     .replace(R.id.container, MainFragment.newInstance())
                     .commitNow()
         }
-        Log.v("msg","From onCreate")
+        //Log.v("msg","From onCreate")
         getDataFromIntent()
     }
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        Log.v("msg","From new Intent")
+        //Log.v("msg","From new Intent")
         getDataFromIntent()
     }
 
@@ -37,7 +37,7 @@ class MainActivity : AppCompatActivity() {
         val extras = intent.extras
         val enlace = extras?.getString(Intent.EXTRA_TEXT)
         enlace?.let {
-            Log.v("msg","Enlace = $it")
+            //Log.v("msg","Enlace = $it")
             viewModel.openVideoUrlLiveData.postValue(Pair(MediaHelper.QUEUE_NO_PLAY,it))
         }
     }

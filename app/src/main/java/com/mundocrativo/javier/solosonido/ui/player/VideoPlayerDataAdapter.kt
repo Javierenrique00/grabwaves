@@ -15,6 +15,8 @@ import com.mundocrativo.javier.solosonido.R
 import com.mundocrativo.javier.solosonido.model.VideoObj
 import com.mundocrativo.javier.solosonido.util.Util
 import com.soywiz.klock.DateTime
+import com.soywiz.klock.ISO8601
+import com.soywiz.klock.TimeSpan
 import kotlinx.android.synthetic.main.video_list_recycler_item.view.*
 
 class VideoPlayerDataAdapter(val context: Context, val event:MutableLiveData<VideoPlayerListEvent> = MutableLiveData()) : ListAdapter<VideoObj, VideoPlayerDataAdapter.VideoListViewHolder>(
@@ -45,7 +47,8 @@ class VideoPlayerDataAdapter(val context: Context, val event:MutableLiveData<Vid
     override fun onBindViewHolder(holder: VideoListViewHolder, position: Int) {
         getItem(position).let { item ->
             holder.viewUrl.text = item.url
-            holder.deltaTime.text = Util.calcDeltaTiempo(item.timestamp/1000,DateTime.nowUnixLong()/1000)
+            //holder.deltaTime.text = Util.calcDeltaTiempo(item.timestamp/1000,DateTime.nowUnixLong()/1000)
+            holder.deltaTime.text = ISO8601.TIME_LOCAL_COMPLETE.format(TimeSpan(item.duration*1000.0))
 
             holder.layout.setOnClickListener {
                 event.value =

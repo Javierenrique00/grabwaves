@@ -35,14 +35,15 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
 
     fun getInfoFromUrl(url:String):InfoObj?{
         var resultado : InfoObj? = null
-
+        //Log.v("msg","traeinfo: $url")
         val strResult = directCache.trae(url)
-
+        //Log.v("msg","before Moshi: $strResult")
         strResult?.let {
             try {
                 resultado = infoAdapter.fromJson(it)
+                //Log.v("msg","Moshi duration:${resultado!!.duration}")
             }catch (e:Exception){
-                Log.e("msg","Error en la conversion Moshi ${e.message}")
+                //Log.e("msg","Error en la conversion Moshi ${e.message}")
             }finally {
                 return resultado
             }
@@ -58,6 +59,7 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
 
     fun getSearchFromUrl(url:String):List<VideoObj>{
         var searchObj :SearchObj? = null
+        //Log.v("msg","Search:$url")
         val strResult = directCache.trae(url)
         var resultado = mutableListOf<VideoObj>()
         strResult?.let{
@@ -94,7 +96,8 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
                 false,
                 0,
                 null,
-                false
+                false,
+                it.duration?:"0"
             ))
         }
         return  resultList

@@ -42,7 +42,7 @@ fun flowFromVideo(api: VideoInfoApi): Flow<VideoObj> = callbackFlow {
             try {
                 sendBlocking(value)
             } catch (e:Exception){
-                Log.v("msg","--Error in flow: $e")
+                //Log.v("msg","--Error in flow: $e")
             }
         }
 

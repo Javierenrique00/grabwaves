@@ -86,7 +86,7 @@ class HistoriaFragment : Fragment() {
         })
 
         viewModel.openVideoUrlLiveData.observe(viewLifecycleOwner, Observer {
-            Log.v("msg","OPEN video ${it.second}")
+            //Log.v("msg","OPEN video ${it.second}")
             val urlToPlay = Util.createUrlConnectionStringPlay(pref.server!!,it.second,pref.hQ)
             viewModel.insertNewVideo(it.second)
             if(it.first!=MediaHelper.QUEUE_NO_PLAY){
@@ -163,7 +163,7 @@ class HistoriaFragment : Fragment() {
             flujoVideo.collect{
                 //--- getFont(it)
                 if(it!=null) {
-                    Log.v("msg","llegó url: ${it.url} titulo:${it.title}")
+                    //Log.v("msg","llegó url: ${it.url} titulo:${it.title} duration:${it.duration}")
                     itemChangeApi.genera(Pair(it.itemPosition,it))
 
                     //---para pedir bajar una imagen
@@ -175,7 +175,7 @@ class HistoriaFragment : Fragment() {
                             item.esUrlReady = true
                             item.thumbnailImg = drawable
                             itemChangeApi.genera(Pair(it.itemPosition,item))
-                            Log.v("msg","Llego thumbnail:${it.thumbnailUrl}")
+                            //Log.v("msg","Llego thumbnail:${it.thumbnailUrl}")
                         }
                         .build()
                     val disposable = imageLoader.enqueue(request)
@@ -195,7 +195,7 @@ class HistoriaFragment : Fragment() {
         lifecycleScope.launch(Dispatchers.Main) {
             flujoItem.collect{
 
-                Log.v("msg","---Item cambiado pos=${it.first} videoTitle=${it.second.title} selected=${it.second.esSelected}")
+                //Log.v("msg","---Item cambiado pos=${it.first} videoTitle=${it.second.title} selected=${it.second.esSelected}")
                 viewModel.videoLista[it.first].title = it.second.title
                 viewModel.videoLista[it.first].channel = it.second.channel
                 viewModel.videoLista[it.first].thumbnailUrl = it.second.thumbnailUrl
@@ -203,6 +203,7 @@ class HistoriaFragment : Fragment() {
                 viewModel.videoLista[it.first].esUrlReady = it.second.esUrlReady
                 viewModel.videoLista[it.first].thumbnailImg = it.second.thumbnailImg
                 viewModel.videoLista[it.first].esSelected = it.second.esSelected
+                viewModel.videoLista[it.first].duration= it.second.duration
                 videoListDataAdapter.notifyItemChanged(it.first,it.second)
 
             }
@@ -246,7 +247,7 @@ class HistoriaFragment : Fragment() {
                     itemTouchHelper.startDrag(it.viewHolder)
                 }
                 is VideoListEvent.OnSwipeRight ->{
-                    Log.v("msg","Recibe evento para borrar por swipe---------==>${it.id}")
+                    //Log.v("msg","Recibe evento para borrar por swipe---------==>${it.id}")
                     val urlInfo = transUrlToServInfo(it.url)
                     viewModel.deleteVideoListElement(it.id,urlInfo)
                 }

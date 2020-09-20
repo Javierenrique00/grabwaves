@@ -32,7 +32,7 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
     val notifyItemRemoved : MutableLiveData<Int> by lazy { MutableLiveData<Int>() }
 
     fun insertNewVideo(url:String) =  viewModelScope.launch(Dispatchers.IO){
-        Log.v("msg","Inserting video to the database")
+        //Log.v("msg","Inserting video to the database")
         val video = VideoObj()
         video.url = url
         video.timestamp = DateTime.now().unixMillisLong
@@ -70,7 +70,8 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
                 false,
                 videoIn.itemPosition,
                 null,
-                false
+                false,
+                ""
             )
         }
         return null
@@ -80,7 +81,7 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
         appRepository.deleteVideo(id,urlInfo)
         val index = videoLista.indexOfFirst { it.id==id }
         if(index>=0){
-            Log.v("msg","---Removiendo de la lista index=$index and id=$id del cache:$urlInfo")
+            //Log.v("msg","---Removiendo de la lista index=$index and id=$id del cache:$urlInfo")
             videoLista.removeAt(index)
             notifyItemRemoved.postValue(index)
         }

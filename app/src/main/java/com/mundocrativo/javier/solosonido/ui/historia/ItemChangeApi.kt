@@ -43,7 +43,7 @@ fun flowFromItem(api: ItemChangeApi): Flow<Pair<Int,VideoObj>> = callbackFlow {
             try {
                 sendBlocking(value)
             } catch (e: Exception){
-                Log.v("msg","--Error in flow: $e")
+                //Log.v("msg","--Error in flow: $e")
             }
         }
 

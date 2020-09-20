@@ -27,7 +27,7 @@ class VideoSearchDataAdapter(val context:Context,val event:MutableLiveData<Searc
             holder.title.text = item.title
             holder.viewUrl.text = item.url
             holder.channel.text = item.channel
-            holder.deltaTime.text = item.timestamp.toString()
+            holder.deltaTime.text = item.durationStr
 
             //--para preguntar si tiene cargado el thumbnail del video
             if(!item.esUrlReady){

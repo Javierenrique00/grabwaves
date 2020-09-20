@@ -15,4 +15,13 @@
     <string name="tab1">Search</string>
     <string name="searchtbhint">Search</string>
     <string name="tab2">Player</string>
+    <string name="queueAdd">Add at the end</string>
+    <string name="queueNext">Add next</string>
+    <string name="queueNew">New List</string>
+    <string name="titlequeue">Play</string>
+    <string name="notification_channel_description">Shows what music is currently playing in UAMP</string>
+    <string name="error_media_not_found">Could not locate requested media.</string>
+    <string name="generic_error">The application has encountered an unexpected error.</string>
+    <string name="notification_channel">Now Playing</string>
+    <string name="messageQueue">What to do with the music queue</string>
 </resources>

@@ -114,7 +114,7 @@ object Util {
         val request = ImageRequest.Builder(context)
             .data(url)
             .build()
-        val bitmap = imageLoader.execute(request).drawable?.toBitmap(160,90)
+        val bitmap = imageLoader.execute(request).drawable?.toBitmap(160,90) //--160 x 90
         return bitmap
     }
 

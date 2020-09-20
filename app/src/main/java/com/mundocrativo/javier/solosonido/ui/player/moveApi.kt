@@ -43,7 +43,7 @@ fun flowFromMove(api: MoveApi): Flow<Pair<Int,Int>> = callbackFlow {
             try {
                 sendBlocking(value)
             } catch (e: Exception){
-                Log.v("msg","--Error in flow: $e")
+                //Log.v("msg","--Error in flow: $e")
             }
         }
 

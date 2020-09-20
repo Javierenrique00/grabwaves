@@ -50,11 +50,11 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
             parentId: String,
             children: MutableList<MediaBrowserCompat.MediaItem>
         ) {
-            Log.v("msg","On loadChildren parentId:$parentId children:${children.size}")
+            //Log.v("msg","On loadChildren parentId:$parentId children:${children.size}")
             children.forEach{
-                Log.v("msg","$it.description.mediaId")
+                //Log.v("msg","$it.description.mediaId")
             }
-            Log.v("msg","---------------------")
+            //Log.v("msg","---------------------")
         }
 
     }
@@ -78,14 +78,15 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
                 false,
                 videoIn.itemPosition,
                 null,
-                false
+                false,
+                ""
             )
         }
         return null
     }
 
     fun getInfoNowPlaying(ruta:String)=viewModelScope.launch(Dispatchers.IO) {
-        Log.v("msg","Buscando info en ruta:$ruta")
+        //Log.v("msg","Buscando info en ruta:$ruta")
         nowPlayingInfo.postValue(appRepository.getInfoFromUrl(ruta))
     }
 
@@ -107,6 +108,10 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
 
     fun sendPlayDuration(){
         MediaHelper.cmdSendPlayDuration(musicServiceConnection)
+    }
+
+    fun sendCmdPausePlay(pausaPlay:Int){
+        MediaHelper.cmdPausaPlay(pausaPlay,musicServiceConnection)
     }
 
 
