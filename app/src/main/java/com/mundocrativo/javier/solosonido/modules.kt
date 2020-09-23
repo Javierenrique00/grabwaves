@@ -6,6 +6,8 @@ import androidx.room.Room
 import com.mundocrativo.javier.solosonido.com.CacheStrDao
 import com.mundocrativo.javier.solosonido.com.DirectCache
 import com.mundocrativo.javier.solosonido.db.DataDatabase
+import com.mundocrativo.javier.solosonido.db.QueueDao
+import com.mundocrativo.javier.solosonido.db.QueueFieldDao
 import com.mundocrativo.javier.solosonido.db.VideoDao
 import com.mundocrativo.javier.solosonido.rep.AppRepository
 import com.mundocrativo.javier.solosonido.service.MusicService
@@ -34,6 +36,14 @@ val appModule = module {
         return database.cacheStrDao
     }
 
+    fun provideQueueDao(database: DataDatabase):QueueDao {
+        return database.queueDao
+    }
+
+    fun provideQueueFieldDao(database: DataDatabase):QueueFieldDao {
+        return database.queueFieldDao
+    }
+
     //--- instancia de la base de datos
     single { provideDatabase(androidApplication()) }
 
@@ -43,6 +53,11 @@ val appModule = module {
     //--- instancia CacheStrDao
     single { provideCacheStrDao(get()) }
 
+    //--- instancia QueueDao
+    single { provideQueueDao(get()) }
+
+    //--- instancia QueueFieldDao
+    single { provideQueueFieldDao(get()) }
 
     fun provideDirectCache(cacheStrDao: CacheStrDao):DirectCache{
         return DirectCache(cacheStrDao)
@@ -59,11 +74,11 @@ val appModule = module {
     single { provideMusicServiceConnection(get()) }
 
 
-    fun provideAppRepository(videoDao: VideoDao,directCache: DirectCache,musicServiceConnection: MusicServiceConnection):AppRepository {
-        return AppRepository(videoDao,directCache,musicServiceConnection)
+    fun provideAppRepository(videoDao: VideoDao,directCache: DirectCache,musicServiceConnection: MusicServiceConnection,queueDao: QueueDao,queueFieldDao: QueueFieldDao):AppRepository {
+        return AppRepository(videoDao,directCache,musicServiceConnection,queueDao,queueFieldDao)
     }
 
-    single { provideAppRepository(get(),get(),get()) }
+    single { provideAppRepository(get(),get(),get(),get(),get()) }
 
 }
 

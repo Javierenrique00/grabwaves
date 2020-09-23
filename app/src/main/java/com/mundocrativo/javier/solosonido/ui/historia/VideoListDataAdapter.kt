@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -48,7 +49,7 @@ class VideoListDataAdapter(val context: Context,val event:MutableLiveData<VideoL
     override fun onBindViewHolder(holder: VideoListViewHolder, position: Int) {
         getItem(position).let { item ->
             holder.viewUrl.text = item.url
-            holder.deltaTime.text = ISO8601.TIME_LOCAL_COMPLETE.format(TimeSpan(item.duration*1000.0))
+            holder.deltaTime.text = Util.shortHour(ISO8601.TIME_LOCAL_COMPLETE.format(TimeSpan(item.duration*1000.0)))
             //Log.v("msg","traeinfo: Duration:${item.duration}")
 
             holder.layout.setOnClickListener {
@@ -79,7 +80,8 @@ class VideoListDataAdapter(val context: Context,val event:MutableLiveData<VideoL
 
             //--para preguntar si tiene cargado el thumbnail del video
             if(!item.esUrlReady){
-                holder.thumbnail.setImageDrawable(context.resources.getDrawable(R.drawable.ic_baseline_ondemand_video_24))
+                //holder.thumbnail.setImageDrawable(context.resources.getDrawable(R.drawable.ic_baseline_ondemand_video_24))
+                holder.thumbnail.setImageDrawable(ResourcesCompat.getDrawable(context.resources,R.drawable.ic_baseline_ondemand_video_24,context.theme))
             }else{
                 holder.thumbnail.setImageDrawable(item.thumbnailImg)
             }

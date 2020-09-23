@@ -255,20 +255,20 @@ class HistoriaFragment : Fragment() {
         })
     }
 
-    fun playMedia(ruta:String){
-
-        val mediaPlayer: MediaPlayer? = MediaPlayer().apply {
-            setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .build()
-            )
-            setDataSource(ruta)
-            prepare() // might take long! (for buffering, etc)
-            start()
-        }
-    }
+//    fun playMedia(ruta:String){
+//
+//        val mediaPlayer: MediaPlayer? = MediaPlayer().apply {
+//            setAudioAttributes(
+//                AudioAttributes.Builder()
+//                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+//                    .setUsage(AudioAttributes.USAGE_MEDIA)
+//                    .build()
+//            )
+//            setDataSource(ruta)
+//            prepare() // might take long! (for buffering, etc)
+//            start()
+//        }
+//    }
 
     fun dialogItemCola(mediaUrl: String,infoUrl:String,originalUrl:String){
         val builder = AlertDialog.Builder(context!!)

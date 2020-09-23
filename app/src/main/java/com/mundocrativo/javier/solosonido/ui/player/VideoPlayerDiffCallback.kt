@@ -14,7 +14,7 @@ class VideoPlayerDiffCallback : DiffUtil.ItemCallback<VideoObj>() {
     }
 
     override fun areItemsTheSame(oldItem: VideoObj, newItem: VideoObj): Boolean {
-        return (oldItem.id == newItem.id)
+        return ( oldItem.url.contentEquals(newItem.url))
     }
 
 }

@@ -18,6 +18,7 @@ import coil.request.ImageRequest
 import com.mundocrativo.javier.solosonido.R
 import com.mundocrativo.javier.solosonido.library.MediaHelper
 import com.mundocrativo.javier.solosonido.model.InfoObj
+import com.mundocrativo.javier.solosonido.model.VideoObj
 import com.mundocrativo.javier.solosonido.ui.historia.*
 import com.mundocrativo.javier.solosonido.ui.main.MainViewModel
 import com.mundocrativo.javier.solosonido.util.AppPreferences
@@ -29,12 +30,9 @@ import com.soywiz.klock.TimeSpan
 import kotlinx.android.synthetic.main.historia_fragment.*
 import kotlinx.android.synthetic.main.player_fragment.*
 import kotlinx.android.synthetic.main.player_fragment.view.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import java.lang.Exception
 import java.util.*
@@ -51,6 +49,7 @@ class PlayerFragment : Fragment() {
     private lateinit var imageLoader : ImageLoader
     val recuerdaPair = RecuerdaPair()
     val seekBarControl = SeekBarControl()
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -74,18 +73,19 @@ class PlayerFragment : Fragment() {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 if(!seekBarControl.isRunning){
                     //limitTimeTxt.text = Util.calcDeltaTiempo(0, p1.toLong()) + "/" + seekBarControl.maxStr
-                    limitTimeTxt.text = ISO8601.TIME_LOCAL_COMPLETE.format(TimeSpan(p1*1000.0))  +" / "+ seekBarControl.maxStr
+                    limitTimeTxt.text = Util.shortHour(ISO8601.TIME_LOCAL_COMPLETE.format(TimeSpan(p1*1000.0)))  +" / "+ seekBarControl.maxStr
                 }
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {
                 seekBarControl.isRunning = false
+                seekBarControl.valid = false
             }
 
             override fun onStopTrackingTouch(p0: SeekBar?) {
                 //---> tiene que enviar la nueva posicion
                 viewModel.playItemOnQueue(viewModel.actualQueueIndex,timeSeekbar.progress*1000L)
-                updateSeekBar()  //-- para que haya un ciclo cada segundo para actualizar el seekbar
+                //updateSeekBar()  //-- para que haya un ciclo cada segundo para actualizar el seekbar
             }
 
         })
@@ -102,11 +102,19 @@ class PlayerFragment : Fragment() {
 
         //-- Se suscribe  ala conexion del music service
         viewModel.iniciaMusicService()
+
+        //----Inicia el flow
+        setupRecyclerFlow()
+
+        setupVideoPlayerRecyclerAdapter()
+        imageLoader = Coil.imageLoader(context!!)
+
         viewModel.playBackState.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
             val isPlaying = it.state
-            //Log.v("msg","Playback State Position=${it.position}  estate=$isPlaying")
+            val actQueueItem  = it.activeQueueItemId
+            Log.v("msg","queue Playback State Position=${it.position}  estate=$isPlaying activeQueueItem=$actQueueItem")
             showPlayPauseButton()
-
+            updateVideoListaEsPlaying(actQueueItem.toInt())
         })
 
         viewModel.musicServiceConnection.nowPlaying.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
@@ -117,48 +125,56 @@ class PlayerFragment : Fragment() {
                 val mediaId = it.description.mediaId
                 val titulo = it.description.title
                 val metadataString = it.getString("METADATA_KEY_TITLE")
-                //Log.v("msg","Now playing in fragment:${mediaId} | titulo=$titulo  metadataString=$metadataString trackNumber=${it.trackNumber}")
-                viewModel.getInfoNowPlaying(transUrlToServInfo(mediaId!!))
+                Log.v("msg","queue Now playing in fragment:${mediaId} | titulo=$titulo  metadataString=$metadataString trackNumber=${it.trackNumber}") //--tracknumber no sirve para la queueIndex
+                viewModel.getInfoNowPlaying(Util.transUrlToServInfo(mediaId!!,pref))
                 viewModel.sendPlayDuration() //--- lanza el comando de la duracion
                 updateSeekBar()  //-- para que haya un ciclo cada segundo para actualizar el seekbar
             }
         })
 
         viewModel.queueLiveData.observe(viewLifecycleOwner, androidx.lifecycle.Observer { queueList ->
-            //Log.v("msg","Cargando la cola del player para mostrar Fragmento ${queueList.size}")
             //--- hay que hacer la conversion a VideoObj
-            viewModel.videoLista.clear()
+
+            val tempList = mutableListOf<VideoObj>()
             queueList.forEach {queueItem ->
-                viewModel.videoLista.add(MediaHelper.convMediaItemToVideoObj(queueItem,context!!))
-                //Log.v("msg","Conversion MediaId=->${queueItem.description.mediaId} selected=")
+                val item = MediaHelper.convMediaItemToVideoObj(queueItem,context!!)
+                tempList.add(item)
             }
-            videoPlayerDataAdapter.submitList(viewModel.videoLista)
-            videoPlayerDataAdapter.notifyDataSetChanged()
+            val iguales = checkTwoVideoListEqual(tempList,viewModel.videoLista)
+            if(!iguales){
+                viewModel.videoLista.clear()
+                queueList.forEach {queueItem ->
+                    viewModel.videoLista.add(MediaHelper.convMediaItemToVideoObj(queueItem,context!!))
+                    //Log.v("msg","Cargando Conversion MediaId=->${queueItem.description.mediaId} ")
+                    videoPlayerDataAdapter.submitList(viewModel.videoLista)
+                    videoPlayerDataAdapter.notifyDataSetChanged()
+                }
+            }else{
+                //---debe chequear que tenga cargada la lista en el adapter
+                val size = videoPlayerDataAdapter.currentList.size
+                //Log.v("msg","Chequeando si tiene cargado el adapter cargado size=$size")
+                if(size==0){
+                    videoPlayerDataAdapter.submitList(viewModel.videoLista)
+                    videoPlayerDataAdapter.notifyDataSetChanged()
+                }
+            }
+            viewModel.updateCurrentPlayList()
+
+            Log.v("msg","Cargando la cola del player para mostrar Fragmento ${queueList.size}  iguales=$iguales")
         })
 
-        viewModel.nowPlaying.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
-            //Log.v("msg","Now Playing de prueba ${it.description.title}")
-        })
+//-- se quitó porque no se usa
+//        viewModel.nowPlaying.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
+//            //Log.v("msg","Now Playing de prueba ${it.description.title}")
+//        })
 
         viewModel.durationLiveData.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
-            //Log.v("msg","Exoplayer--> Position:${it.first} ContentDuration:${it.second} QueueIndex:${it.third}")
+            Log.v("msg","queue Exoplayer--> Position:${it.first} ContentDuration:${it.second} QueueIndex:${it.third}")
             seekBarControl.setProgress(it.first,it.second)
             timeSeekbar.max = (it.second/1000L).toInt()
              if((it.second>0) and (it.second<86400000)){
-                 seekBarControl.maxStr = ISO8601.TIME_LOCAL_COMPLETE.format(TimeSpan(it.second*1.0))
-                try {
-                    //-- probablemente esta el cambio del track entonces hay que desactivar mostrar el track antiguo y mostrar elnuevo en la cola
-                    val actual = viewModel.videoLista[viewModel.actualQueueIndex]
-                    actual.esPlaying = false
-                    itemChangeApi.genera(Pair(viewModel.actualQueueIndex,actual)) //--> quita el anterior
-                    viewModel.actualQueueIndex = it.third
-                    val cambiado = viewModel.videoLista[viewModel.actualQueueIndex]
-                    cambiado.esPlaying = true
-                    itemChangeApi.genera(Pair(viewModel.actualQueueIndex,cambiado)) //--> pone el nuevo
-                }catch (e:Exception){
-                    Log.e("msg","--Error actualizando actual song${e.message}")
-                }
-
+                 seekBarControl.maxStr = Util.shortHour(ISO8601.TIME_LOCAL_COMPLETE.format(TimeSpan(it.second*1.0)))
+                 savePlayingState(viewModel.actualQueueIndex,(it.first/1000L).toInt())
             }else{
                  seekBarControl.maxStr = "00:00:00"
             }
@@ -179,27 +195,22 @@ class PlayerFragment : Fragment() {
         })
 
 
-        imageLoader = Coil.imageLoader(context!!)
-
-        //----Inicia el flow
-        setupRecyclerFlow()
-
-        setupVideoPlayerRecyclerAdapter()
     }
 
     override fun onResume() {
         super.onResume()
         //--- para actualizar el contenido apenas se carga
-        videoPlayerDataAdapter.notifyDataSetChanged()
+        Log.v("msg","--- Resume view")
+        Log.v("msg","videoListSize ${viewModel.videoLista.size}")
+        if(viewModel.videoLista.size==0) viewModel.LoadDefaultPlayListToPlayer(context!!,pref)
 
         viewModel.sendPlayDuration()
-
 
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-
+        //Log.v("msg","---- Destroy view")
         //------------
         videoInfoApi.acaba()
         itemChangeApi.acaba()
@@ -211,28 +222,36 @@ class PlayerFragment : Fragment() {
         videoInfoApi = VideoInfoApi()
         val flujoVideo = flowFromVideo(
             videoInfoApi
-        ).buffer(Channel.UNLIMITED).map { viewModel.getUrlInfo(it,transUrlToServInfo(it.url)) }
+        ).buffer(Channel.UNLIMITED).map { viewModel.getUrlInfo(it,Util.transUrlToServInfo(it.url,pref)) }
 
         //--- Se quita el GLobalScope
-        lifecycleScope.launch(Dispatchers.IO) {
+        lifecycleScope.launch {
             flujoVideo.collect{
-                if(it!=null) {
-                    //Log.v("msg","Llegó url: ${it.url} titulo:${it.title} selected:${it.esSelected}")
-                    itemChangeApi.genera(Pair(it.itemPosition,it))
+                lifecycleScope.launch {
+                    if (it != null) {
+                        delay(TIME_FOR_PAINT_UPDATE)
+                        //Log.v( "msg", "Llegó la info url: ${it.url} titulo:${it.title} for position:${it.itemPosition}" )
+                        //--para poner el que está sonando directamente en el es playing
+                        if (it.itemPosition == viewModel.playBackState.value!!.activeQueueItemId.toInt()) it.esPlaying =
+                            true
+                        //itemChangeApi.genera(Pair(it.itemPosition,it))
+                        updateItem(it.itemPosition, it)
 
-                    //---para pedir bajar una imagen
-                    val request = ImageRequest.Builder(context!!)
-                        .data(it.thumbnailUrl)
-                        .target { drawable ->
+                        //---para pedir bajar una imagen
+                        val request = ImageRequest.Builder(context!!)
+                            .data(it.thumbnailUrl)
+                            .target { drawable ->
 
-                            val item = it
-                            item.esUrlReady = true
-                            item.thumbnailImg = drawable
-                            itemChangeApi.genera(Pair(it.itemPosition,item))
-                            //Log.v("msg","Llego thumbnail:${it.thumbnailUrl}")
-                        }
-                        .build()
-                    val disposable = imageLoader.enqueue(request)
+                                val item = it
+                                item.esUrlReady = true
+                                item.thumbnailImg = drawable
+                                //itemChangeApi.genera(Pair(it.itemPosition,item))
+                                updateItem(it.itemPosition, it)
+                                //Log.v("msg","Llego thumbnail:${it.thumbnailUrl}")
+                            }
+                            .build()
+                        val disposable = imageLoader.enqueue(request)
+                    }
                 }
 
             }
@@ -245,19 +264,7 @@ class PlayerFragment : Fragment() {
         //--- Se quita el GLobalScope
         lifecycleScope.launch(Dispatchers.Main) {
             flujoItem.collect{
-
-                //Log.v("msg","Item cambiado pos=${it.first} videoTitle=${it.second.title} selected=${it.second.esSelected}")
-                viewModel.videoLista[it.first].title = it.second.title
-                viewModel.videoLista[it.first].channel = it.second.channel
-                viewModel.videoLista[it.first].thumbnailUrl = it.second.thumbnailUrl
-                viewModel.videoLista[it.first].esInfoReady = it.second.esInfoReady
-                viewModel.videoLista[it.first].esUrlReady = it.second.esUrlReady
-                viewModel.videoLista[it.first].thumbnailImg = it.second.thumbnailImg
-                viewModel.videoLista[it.first].esSelected = it.second.esSelected
-                viewModel.videoLista[it.first].esPlaying = it.second.esPlaying
-                viewModel.videoLista[it.first].duration = it.second.duration
-                videoPlayerDataAdapter.notifyItemChanged(it.first,it.second)
-
+                updateItem(it.first,it.second)
             }
         }
 
@@ -265,8 +272,7 @@ class PlayerFragment : Fragment() {
             moveApi = MoveApi()
             val actPair = flowFromMove(moveApi)
 
-
-        lifecycleScope.launch(Dispatchers.Main) {
+        lifecycleScope.launch {
             actPair.collect {act->
                 //Log.v("msg","--->Anterior From:${act.first}  to:From:${act.second}")
                 val ant = recuerdaPair.datoAnterior
@@ -280,12 +286,23 @@ class PlayerFragment : Fragment() {
                     recuerdaPair.storeData(act)
                 }
                 launch {
-                    delay(1000)
-                    if((DateTime.nowUnixLong() - recuerdaPair.timeDataAnterior)>1000){
+                    delay(TIME_FOR_MOVE_ITEMS_UPDATE)
+                    if((DateTime.nowUnixLong() - recuerdaPair.timeDataAnterior)>TIME_FOR_MOVE_ITEMS_UPDATE){
                         //---
                         val rec = recuerdaPair.datoAnterior
                         //Log.v("msg","#### Final ####>>Anterior From:${rec?.first}  to:From:${rec?.second}")
-                        if(rec!=null) viewModel.moveQueueItem(rec.first,rec.second)  //--- da la orden de mover los del player
+                        if(rec!=null) {
+                            val elPlaying = viewModel.videoLista[viewModel.actualQueueIndex] //--para saber el item
+                            val elItem = viewModel.videoLista.removeAt(rec.first)
+                            val elSecond = if(rec.first<rec.second) rec.second -1 else rec.second
+                            viewModel.videoLista.add(elSecond,elItem)
+                            //--debe actualizar el actualQueueindex
+                            val playingIndex = viewModel.videoLista.indexOf(elPlaying)
+                            updateVideoListaEsPlaying(playingIndex)
+                            videoPlayerDataAdapter.moveItem(rec.first,rec.second)
+                            videoPlayerDataAdapter.notifyItemChanged(playingIndex)  //---notifica el movimiento del item del play
+                            viewModel.moveQueueItem(rec.first,rec.second)
+                        }  //--- da la orden de mover los del player
                         recuerdaPair.clearData()
                     }
                 }
@@ -295,6 +312,23 @@ class PlayerFragment : Fragment() {
         }
 
     }
+
+    fun updateItem(index:Int,video:VideoObj){
+        //Log.v("msg","Item cambiado pos=${index} videoTitle=${video.title} selected=${video.esSelected}")
+        if(index<viewModel.videoLista.size){
+            viewModel.videoLista[index].title = video.title
+            viewModel.videoLista[index].channel = video.channel
+            viewModel.videoLista[index].thumbnailUrl = video.thumbnailUrl
+            viewModel.videoLista[index].esInfoReady = video.esInfoReady
+            viewModel.videoLista[index].esUrlReady = video.esUrlReady
+            viewModel.videoLista[index].thumbnailImg = video.thumbnailImg
+            viewModel.videoLista[index].esSelected = video.esSelected
+            viewModel.videoLista[index].esPlaying = video.esPlaying
+            viewModel.videoLista[index].duration = video.duration
+            videoPlayerDataAdapter.notifyItemChanged(index,video)
+        }
+    }
+
 
     fun uneMoves(antPair:Pair<Int,Int>?,actPair:Pair<Int,Int>):Pair<Int,Int>{
         if(antPair==null) return actPair
@@ -320,7 +354,7 @@ class PlayerFragment : Fragment() {
                     val itemSelected = it.item
                     itemSelected.esSelected = true
                     itemChangeApi.genera(Pair(it.position,itemSelected))
-                    MainScope().launch {
+                    lifecycleScope.launch {
                         delay(100)
                         itemSelected.esSelected = false
                         itemChangeApi.genera(Pair(it.position,itemSelected))
@@ -328,6 +362,7 @@ class PlayerFragment : Fragment() {
 
                 }
                 is VideoPlayerListEvent.OnItemGetInfo ->{
+                    //Log.v("msg","Asking for Info: ${it.position}")
                     val dataWithPosition = it.item
                     dataWithPosition.itemPosition = it.position
                     videoInfoApi.genera(dataWithPosition)
@@ -350,33 +385,66 @@ class PlayerFragment : Fragment() {
     }
 
 
-    fun transUrlToServInfo(url:String):String{
-        val videoBase64 = Util.convStringToBase64(url)
-        val ruta = pref.server + "/info/?link=" +videoBase64
-        return ruta
-    }
-
     fun updateSeekBar(){
+
         lifecycleScope.launch {
             seekBarControl.programUpdate { cuenta ->
-                if(viewModel.playBackState.value!!.state== PLAYBACK_STATE_PLAY){
-                    val prog = seekBarControl.getSegProgress()
+                val prog = seekBarControl.getSegProgress()
+                prog?.let {prog ->
                     timeSeekbar.progress = prog
-                    limitTimeTxt.text =  ISO8601.TIME_LOCAL_COMPLETE.format(TimeSpan(prog*1000.0)) +" / "+ seekBarControl.maxStr
-                    if ((cuenta % 10) == 0) {
-                        viewModel.sendPlayDuration()
-                    }
+                    limitTimeTxt.text =  Util.shortHour(ISO8601.TIME_LOCAL_COMPLETE.format(TimeSpan(prog*1000.0))) +" / "+ seekBarControl.maxStr
+                }
+                if ((cuenta % 10) == 0) {
+                    viewModel.sendPlayDuration()
                 }
             }
         }
     }
 
+    fun savePlayingState(indexSong:Int,progress:Int){
+        if(!viewModel.initLoading) {
+            Log.v("msg", "saving state: index:$indexSong Progress=$progress")
+            pref.lastSongIndexPlayed = indexSong
+            pref.lastTimePlayed = progress
+        }
+    }
+
     fun showPlayPauseButton(){
         when(viewModel.playBackState.value!!.state){
-            PLAYBACK_STATE_PAUSE -> pauseBt.setImageResource(R.drawable.exo_controls_play)
-            PLAYBACK_STATE_PLAY -> pauseBt.setImageResource(R.drawable.exo_controls_pause)
+            PLAYBACK_STATE_PAUSE -> {
+                pauseBt.setImageResource(R.drawable.exo_controls_play)
+                seekBarControl.isRunning = false
+            }
+            PLAYBACK_STATE_PLAY -> {
+                pauseBt.setImageResource(R.drawable.exo_controls_pause)
+                updateSeekBar()
+            }
             else -> pauseBt.setImageResource(R.drawable.exo_controls_play)
         }
+    }
+
+    fun updateVideoListaEsPlaying(activeQueueItem:Int){
+        if((viewModel.actualQueueIndex<viewModel.videoLista.size) and (viewModel.actualQueueIndex>-1)){
+            //Log.v("msg","Updating esPlaying actualQueueIndex=$activeQueueItem anterior:${viewModel.actualQueueIndex}")
+            val actual = viewModel.videoLista[viewModel.actualQueueIndex]
+            actual.esPlaying = false
+            itemChangeApi.genera(Pair(viewModel.actualQueueIndex,actual)) //--> quita el anterior
+            viewModel.actualQueueIndex = activeQueueItem
+            val cambiado = viewModel.videoLista[viewModel.actualQueueIndex]
+            cambiado.esPlaying = true
+            itemChangeApi.genera(Pair(viewModel.actualQueueIndex,cambiado))
+        }else{
+            Log.e("msg","No puede actualizar actualQueueIndex,  actualQueueIndex(no update)=$activeQueueItem anterior(try actual):${viewModel.actualQueueIndex}  tamaño videoLista=${viewModel.videoLista.size}")
+        }
+    }
+
+
+    fun checkTwoVideoListEqual(list1:List<VideoObj>,list2:List<VideoObj>):Boolean{
+        if(list1.size!=list2.size) return false
+        list1.forEachIndexed { index, videoObj ->
+            if(!videoObj.url.contentEquals(list2[index].url)) return false
+        }
+        return true
     }
 
 
@@ -397,3 +465,5 @@ class PlayerFragment : Fragment() {
 
 const val PLAYBACK_STATE_PLAY = 3
 const val PLAYBACK_STATE_PAUSE = 2
+const val TIME_FOR_PAINT_UPDATE = 100L  //---ms
+const val TIME_FOR_MOVE_ITEMS_UPDATE = 2000L   //---ms

@@ -1,13 +1,16 @@
 package com.mundocrativo.javier.solosonido.ui.player
 
 import android.content.Context
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.DrawableRes
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -48,7 +51,7 @@ class VideoPlayerDataAdapter(val context: Context, val event:MutableLiveData<Vid
         getItem(position).let { item ->
             holder.viewUrl.text = item.url
             //holder.deltaTime.text = Util.calcDeltaTiempo(item.timestamp/1000,DateTime.nowUnixLong()/1000)
-            holder.deltaTime.text = ISO8601.TIME_LOCAL_COMPLETE.format(TimeSpan(item.duration*1000.0))
+            holder.deltaTime.text = Util.shortHour(ISO8601.TIME_LOCAL_COMPLETE.format(TimeSpan(item.duration*1000.0)))
 
             holder.layout.setOnClickListener {
                 event.value =
@@ -75,6 +78,7 @@ class VideoPlayerDataAdapter(val context: Context, val event:MutableLiveData<Vid
 
             //--para preguntar por el info del video
             if(!item.esInfoReady){
+                //Log.v("msg","info not set position=$position")
                 event.value =
                     VideoPlayerListEvent.OnItemGetInfo(
                         position,
@@ -88,7 +92,8 @@ class VideoPlayerDataAdapter(val context: Context, val event:MutableLiveData<Vid
 
             //--para preguntar si tiene cargado el thumbnail del video
             if(!item.esUrlReady){
-                holder.thumbnail.setImageDrawable(context.resources.getDrawable(R.drawable.ic_baseline_ondemand_video_24))
+                //holder.thumbnail.setImageDrawable(context.resources.getDrawable(R.drawable.ic_baseline_ondemand_video_24))
+                holder.thumbnail.setImageDrawable(ResourcesCompat.getDrawable(context.resources,R.drawable.ic_baseline_ondemand_video_24,context.theme))
             }else{
                 holder.thumbnail.setImageDrawable(item.thumbnailImg)
             }

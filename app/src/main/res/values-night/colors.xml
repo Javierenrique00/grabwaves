@@ -3,13 +3,13 @@
 
     <color name="ColorBarraPrincipalApp">@color/azul01</color>
     <color name="ColorBarraComplementoApp">@color/azul08</color>
-    <color name="ColorFondoApp">@color/black05</color>
+    <color name="ColorFondoApp">@color/black07</color>
     <color name="ColorTextoApp">@color/white02</color>
     <color name="ColorIconLine">@color/white02</color>
-    <color name="ColorIconLineInverse">@color/black05</color>
-    <color name="ColorBackgroundIcon">@color/black05</color>
+    <color name="ColorIconLineInverse">@color/black07</color>
+    <color name="ColorBackgroundIcon">@color/black07</color>
     <color name="ColorResaltado">@color/red05</color>
-    <color name="ColorFondoResaltado">@color/black07</color>
+    <color name="ColorFondoResaltado">@color/black05</color>
     <color name="ColorSelectfondo">@color/black03</color>
 
 </resources>

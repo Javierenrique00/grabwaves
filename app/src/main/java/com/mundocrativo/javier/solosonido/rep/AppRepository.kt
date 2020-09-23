@@ -3,20 +3,21 @@ package com.mundocrativo.javier.solosonido.rep
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import com.mundocrativo.javier.solosonido.com.DirectCache
+import com.mundocrativo.javier.solosonido.db.QueueDao
+import com.mundocrativo.javier.solosonido.db.QueueFieldDao
 import com.mundocrativo.javier.solosonido.db.VideoDao
-import com.mundocrativo.javier.solosonido.model.InfoObj
-import com.mundocrativo.javier.solosonido.model.SearchObj
-import com.mundocrativo.javier.solosonido.model.VideoObj
+import com.mundocrativo.javier.solosonido.model.*
 import com.mundocrativo.javier.solosonido.service.MusicServiceConnection
 import com.squareup.moshi.Moshi
 import java.lang.Exception
 
 
-class AppRepository(private val videoDao: VideoDao,private val directCache: DirectCache,val musicServiceConnection: MusicServiceConnection) {
+class AppRepository(private val videoDao: VideoDao,private val directCache: DirectCache,val musicServiceConnection: MusicServiceConnection,private val queueDao: QueueDao,private val queueFieldDao: QueueFieldDao) {
     val moshi = Moshi.Builder().build()
     val infoAdapter = moshi.adapter(InfoObj::class.java)
     val searchAdapter = moshi.adapter(SearchObj::class.java)
     val openVideoUrlLiveData : MutableLiveData<Pair<Int,String>> by lazy { MutableLiveData<Pair<Int,String>>() }
+    var defaultPlayListId : Long? = null
 
 
 
@@ -107,4 +108,26 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
         openVideoUrlLiveData.postValue(Pair(queueCmd,url))
     }
 
+    //--- para el manejo de las listas de reproduccion y la cola ---------------------------------------
+    fun updateDefaultQueue(itemList:List<QueueField>){
+        //--- chequea que tenga creada la lista DEFAULT
+        val defaultIndex = getDefaulQueueIndex()
+        itemList.forEach { it.queueId=defaultIndex }
+        queueFieldDao.deleteFromQueue(defaultIndex)
+        queueFieldDao.insertList(itemList)
+    }
+
+    private fun getDefaulQueueIndex():Long{
+        if(defaultPlayListId==null){
+            val defaultQueue = queueDao.searchByName(DEFAULT_QUEUE_NAME)
+            defaultPlayListId = if(defaultQueue==null) queueDao.insert(QueueObj(0, DEFAULT_QUEUE_NAME)) else defaultQueue.id
+        }
+        return defaultPlayListId!!
+    }
+
+    fun getDefaultQueue():List<QueueField>{
+        return queueFieldDao.traeQueueItems(getDefaulQueueIndex())
+    }
 }
+
+const val DEFAULT_QUEUE_NAME = "default"

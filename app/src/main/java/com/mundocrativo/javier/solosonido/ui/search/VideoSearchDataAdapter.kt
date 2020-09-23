@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -31,7 +32,8 @@ class VideoSearchDataAdapter(val context:Context,val event:MutableLiveData<Searc
 
             //--para preguntar si tiene cargado el thumbnail del video
             if(!item.esUrlReady){
-                holder.thumbnail.setImageDrawable(context.resources.getDrawable(R.drawable.ic_baseline_ondemand_video_24))
+                //holder.thumbnail.setImageDrawable(context.resources.getDrawable(R.drawable.ic_baseline_ondemand_video_24))
+                holder.thumbnail.setImageDrawable(ResourcesCompat.getDrawable(context.resources,R.drawable.ic_baseline_ondemand_video_24,context.theme))
                 event.value = SearchListEvent.OnItemGetThumbnail(position,item)
             }else{
                 holder.thumbnail.setImageDrawable(item.thumbnailImg)

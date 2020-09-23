@@ -31,17 +31,6 @@
             android:layout_height="match_parent">
 
             <TextView
-                android:id="@+id/limitTimeTxt"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:layout_marginBottom="4dp"
-                android:text="Lim"
-                android:textAppearance="@style/TextAppearance.AppCompat.Small"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/pauseBt" />
-
-            <TextView
                 android:id="@+id/titleTxt"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -53,6 +42,18 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/pauseBt"
                 app:layout_constraintStart_toStartOf="parent" />
+
+            <TextView
+                android:id="@+id/limitTimeTxt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_marginBottom="4dp"
+                android:background="@color/ColorBarraPrincipalApp"
+                android:text="Lim"
+                android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/pauseBt" />
 
             <SeekBar
                 android:id="@+id/timeSeekbar"

@@ -98,14 +98,18 @@ object Util {
         val ruta = server + "/?link="+videoBase64+"&q=$quality"
         Log.v("msg","Contactando streaming:$ruta")
         return ruta
-        //launchNavigator(ruta)
-        //playMedia(ruta)
     }
 
     fun createUrlConnectionStringSearch(server:String,searchLetras:String,limit:Int):String {
         val videoBase64 = convStringToBase64(searchLetras)
         val ruta = server + "/search/?question="+videoBase64+"&limit=$limit"
         Log.v("msg","Buscando:$ruta")
+        return ruta
+    }
+
+    fun transUrlToServInfo(url:String,pref: AppPreferences):String{
+        val videoBase64 = convStringToBase64(url)
+        val ruta = pref.server + "/info/?link=" +videoBase64
         return ruta
     }
 
@@ -118,6 +122,19 @@ object Util {
         return bitmap
     }
 
+    fun shortHour(hora:String):String{
+        var salida = hora
+        var salida2 = ""
+        var salida3 = ""
+        var salida4 = ""
+        var salida5 = ""
+        if(hora.startsWith("0")) salida=hora.trimStart('0') else return hora
+        if(salida.startsWith(":")) salida2=salida.trimStart(':') else return salida
+        if(salida2.startsWith("0")) salida3=salida2.trimStart('0') else return salida2
+        if(salida3.startsWith(":")) salida4=salida3.trimStart(':') else return salida3
+        if(salida4.startsWith("0")) salida5=salida4.trimStart('0') else return salida4
+        return salida5
+    }
 
 
 }
