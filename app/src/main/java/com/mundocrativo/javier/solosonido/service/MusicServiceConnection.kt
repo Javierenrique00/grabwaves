@@ -115,9 +115,10 @@ class MusicServiceConnection(val context: Context, serviceComponent: ComponentNa
 
         override fun onSessionEvent(event: String?, extras: Bundle?) {
             super.onSessionEvent(event, extras)
-            when (event) {
-                //NETWORK_FAILURE -> networkFailure.postValue(true)
-            }
+            Log.e("msg","Session event Message (No estamos seguros que sea error) ")
+//            when (event) {
+//                //NETWORK_FAILURE -> networkFailure.postValue(true)
+//            }
         }
 
 

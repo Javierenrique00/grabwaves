@@ -44,6 +44,11 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
     }
 
 
+    override fun onCleared() {
+        super.onCleared()
+        Log.e("msg","Cerrando el PlayerViewmodel, liberando musicserverconnection")
+        musicServiceConnection.unsubscribe(MUSIC_ROOT,subscriptionCallback)
+    }
 
     val subscriptionCallback = object : MediaBrowserCompat.SubscriptionCallback(){
 

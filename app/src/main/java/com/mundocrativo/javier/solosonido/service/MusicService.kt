@@ -96,6 +96,7 @@ open class MusicService : MediaBrowserServiceCompat() {
         .setUsage(C.USAGE_MEDIA)
         .build()
 
+    private var isForegroundService = false
     private val playerListener = PlayerEventListener()
 
     private val dataSourceFactory: DefaultDataSourceFactory by lazy {
@@ -361,11 +362,24 @@ open class MusicService : MediaBrowserServiceCompat() {
             notification: Notification,
             ongoing: Boolean
         ) {
-            //Log.v("msg","Notification event llegó-----$notificationId  $notification")
+            Log.v("msg","Notification event llegó for Foreground service-----$notificationId  $notification")
+
+            if (ongoing && !isForegroundService) {
+                ContextCompat.startForegroundService(
+                    applicationContext,
+                    Intent(applicationContext, this@MusicService.javaClass)
+                )
+                Log.v("msg","Activating foreground service")
+                startForeground(notificationId, notification)
+                isForegroundService = true
+            }
         }
 
         override fun onNotificationCancelled(notificationId: Int, dismissedByUser: Boolean) {
-
+            Log.v("msg","Stop foreground service")
+            stopForeground(true)
+            isForegroundService = false
+            stopSelf()
         }
     }
 
