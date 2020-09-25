@@ -172,7 +172,6 @@ class HistoriaFragment : Fragment() {
                             item.esUrlReady = true
                             item.thumbnailImg = drawable
                             updateItem(it.itemPosition,it)
-                            //Log.v("msg","Llego thumbnail:${it.thumbnailUrl}")
                         }
                         .build()
                     val disposable = imageLoader.enqueue(request)

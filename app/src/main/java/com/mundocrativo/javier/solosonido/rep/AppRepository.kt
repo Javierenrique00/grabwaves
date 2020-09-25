@@ -44,7 +44,7 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
                 resultado = infoAdapter.fromJson(it)
                 //Log.v("msg","Moshi duration:${resultado!!.duration}")
             }catch (e:Exception){
-                //Log.e("msg","Error en la conversion Moshi ${e.message}")
+                Log.e("msg","Error en la conversion Moshi ${e.message}")
             }finally {
                 return resultado
             }

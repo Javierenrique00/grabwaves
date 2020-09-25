@@ -433,16 +433,22 @@ class PlayerFragment : Fragment() {
 
     fun updateVideoListaEsPlaying(activeQueueItem:Int){
         if((viewModel.actualQueueIndex<viewModel.videoLista.size) and (viewModel.actualQueueIndex>-1)){
-            //Log.v("msg","Updating esPlaying actualQueueIndex=$activeQueueItem anterior:${viewModel.actualQueueIndex}")
-            val actual = viewModel.videoLista[viewModel.actualQueueIndex]
-            actual.esPlaying = false
-            itemChangeApi.genera(Pair(viewModel.actualQueueIndex,actual)) //--> quita el anterior
+            checkListItemPlayingForClear()
             viewModel.actualQueueIndex = activeQueueItem
             val cambiado = viewModel.videoLista[viewModel.actualQueueIndex]
             cambiado.esPlaying = true
             itemChangeApi.genera(Pair(viewModel.actualQueueIndex,cambiado))
         }else{
             Log.e("msg","No puede actualizar actualQueueIndex,  actualQueueIndex(no update)=$activeQueueItem anterior(try actual):${viewModel.actualQueueIndex}  tamaño videoLista=${viewModel.videoLista.size}")
+        }
+    }
+
+    fun checkListItemPlayingForClear(){
+        viewModel.videoLista.forEachIndexed { index, videoObj ->
+            if(videoObj.esPlaying){
+                videoObj.esPlaying = false
+                videoPlayerDataAdapter.notifyItemChanged(index)
+            }
         }
     }
 
