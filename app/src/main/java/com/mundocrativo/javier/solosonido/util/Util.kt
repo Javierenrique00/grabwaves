@@ -1,10 +1,12 @@
 package com.mundocrativo.javier.solosonido.util
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Base64.DEFAULT
 import android.util.Base64
 import android.util.Log
+import android.view.View
 import androidx.core.graphics.drawable.toBitmap
 import coil.Coil
 import coil.request.ImageRequest
@@ -112,6 +114,26 @@ object Util {
         val ruta = pref.server + "/info/?link=" +videoBase64
         return ruta
     }
+
+    fun createUrlFromVideoId(videoId:String):String{
+        return "https://www.youtube.com/watch?v=$videoId"
+    }
+
+
+    fun clickAnimator(view: View){
+        val animator =ValueAnimator.ofFloat(1f,1.8f,1f).apply {
+            duration = 500
+            addUpdateListener {
+                val scala = it.getAnimatedValue() as Float
+                view.scaleX = scala
+                view.scaleY = scala
+            }
+            start()
+        }
+
+    }
+
+
 
     suspend fun getBitmap(url:String,context:Context):Bitmap?{
         val imageLoader = Coil.imageLoader(context)

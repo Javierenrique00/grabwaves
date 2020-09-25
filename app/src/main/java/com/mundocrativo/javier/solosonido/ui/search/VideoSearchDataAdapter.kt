@@ -1,6 +1,7 @@
 package com.mundocrativo.javier.solosonido.ui.search
 
 import android.content.Context
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -41,6 +42,11 @@ class VideoSearchDataAdapter(val context:Context,val event:MutableLiveData<Searc
 
             holder.layout.setOnClickListener {
                 event.value = SearchListEvent.OnItemClick(position,item)
+            }
+
+            holder.layout.setOnLongClickListener {
+                event.value = SearchListEvent.OnItemLongClick(position,item)
+                true
             }
 
             //--- pone el color del fondo

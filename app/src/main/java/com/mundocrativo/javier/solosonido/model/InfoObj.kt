@@ -18,5 +18,6 @@ data class Related(
     val id: String,
     val title: String,
     val author : String,
-    val duration : Int
+    val duration : Int,
+    val iUrl:String
 )

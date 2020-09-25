@@ -26,6 +26,25 @@
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_baseline_search_24" />
 
+    <ImageView
+        android:id="@+id/cancelBt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        app:layout_constraintStart_toEndOf="@+id/searchTb"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_baseline_clear_24" />
+
+    <ImageView
+        android:id="@+id/backBt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:srcCompat="@drawable/ic_baseline_arrow_back_grey" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/searchRv"
         android:layout_width="0dp"

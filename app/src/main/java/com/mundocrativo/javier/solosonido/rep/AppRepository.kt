@@ -36,7 +36,7 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
 
     fun getInfoFromUrl(url:String):InfoObj?{
         var resultado : InfoObj? = null
-        //Log.v("msg","traeinfo: $url")
+        Log.v("msg","traeinfo: $url")
         val strResult = directCache.trae(url)
         //Log.v("msg","before Moshi: $strResult")
         strResult?.let {

@@ -11,6 +11,7 @@
     <color name="ColorResaltado">@color/red05</color>
     <color name="ColorFondoResaltado">@color/yellow03</color>
     <color name="ColorSelectfondo">@color/yellow06</color>
+    <color name="ColorDisable">@color/grey06</color>
 
     <color name="yellow02">#fff5d6</color>
     <color name="yellow03">#fee085</color>
@@ -29,5 +30,8 @@
     <color name="black09">#131316</color>
 
     <color name="white02">#f4f4f8</color>
+
+
+    <color name="grey06">#888888</color>
 
 </resources>

@@ -24,6 +24,7 @@ import com.mundocrativo.javier.solosonido.ui.historia.VideoInfoApi
 import com.mundocrativo.javier.solosonido.ui.historia.flowFromItem
 import com.mundocrativo.javier.solosonido.ui.historia.flowFromVideo
 import com.mundocrativo.javier.solosonido.util.AppPreferences
+import com.mundocrativo.javier.solosonido.util.Util
 import com.mundocrativo.javier.solosonido.util.Util.createUrlConnectionStringSearch
 
 import kotlinx.android.synthetic.main.search_fragment.*
@@ -67,7 +68,23 @@ class SearchFragment : Fragment() {
         val view = inflater.inflate(R.layout.search_fragment, container, false)
 
         view.searchTb.addTextChangedListener(tw)
+        view.cancelBt.setOnClickListener {
+            searchTb.setText("")
+        }
 
+        view.backBt.setOnClickListener {
+            val lastIndex = viewModel.recVideoList.size -1
+            Log.v("msg","Back button last backIndex=$lastIndex")
+            if(lastIndex>=0){
+                viewModel.videoLista = viewModel.recVideoList.removeAt(lastIndex).toMutableList()
+                viewModel.videoLista.forEach { it.esSelected=false }
+                viewModel.videoListLiveData.postValue(viewModel.videoLista)
+
+                //----
+                Util.clickAnimator(backBt)
+            }
+            showBackBtState()
+        }
 
         return view
     }
@@ -92,6 +109,7 @@ class SearchFragment : Fragment() {
         viewModel.videoListLiveData.observe(viewLifecycleOwner, Observer {
             searchListAdapter.submitList(it)
             searchListAdapter.notifyDataSetChanged()
+            showBackBtState()
         })
 
         imageLoader = Coil.imageLoader(context!!)
@@ -110,6 +128,11 @@ class SearchFragment : Fragment() {
 
     }
 
+    override fun onResume() {
+        super.onResume()
+        showBackBtState()
+    }
+
     private fun setupThumbnailFlow(){
         thumbnailApi = VideoInfoApi()
         val thumbnailFlow = flowFromVideo(thumbnailApi).buffer(Channel.UNLIMITED)
@@ -125,7 +148,7 @@ class SearchFragment : Fragment() {
                         item.esUrlReady = true
                         item.thumbnailImg = drawable
                         itemChangeApi.genera(Pair(video.itemPosition,item))
-                        Log.v("msg","Llego thumbnail:${video.thumbnailUrl}")
+                        //Log.v("msg","Llego thumbnail:${video.thumbnailUrl}")
                     }
                     .build()
                 val disposable = imageLoader.enqueue(request)
@@ -188,6 +211,12 @@ class SearchFragment : Fragment() {
                     item.itemPosition = it.position
                     thumbnailApi.genera(it.item)
                 }
+                is SearchListEvent.OnItemLongClick ->{
+                    searchTb.setText("")
+                    it.item.esSelected = true
+                    itemChangeApi.genera(Pair(it.position,it.item))
+                    viewModel.getRelatedVideos(Util.transUrlToServInfo(it.item.url,pref))
+                }
             }
         })
 
@@ -205,6 +234,14 @@ class SearchFragment : Fragment() {
         val dialog =builder.create()
 
         dialog.show()
+    }
+
+    fun showBackBtState(){
+        if(viewModel.recVideoList.size==0){
+            backBt.setImageResource(R.drawable.ic_baseline_arrow_back_grey)
+        }else{
+            backBt.setImageResource(R.drawable.ic_baseline_arrow_back_24)
+        }
     }
 
 }
