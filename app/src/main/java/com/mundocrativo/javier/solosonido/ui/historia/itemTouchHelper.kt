@@ -36,7 +36,7 @@ val itemTouchHelper by lazy {
                 // Log.v("msg","Swipe to the right") --> todo si hace el swipe to the right
                 if(direction== RIGHT){
                     val hv = viewHolder as VideoListDataAdapter.VideoListViewHolder
-                    hv.swipeRight()
+                    hv.swipeRight(viewHolder.adapterPosition)
                 }
             }
 

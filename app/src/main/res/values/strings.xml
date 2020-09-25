@@ -44,5 +44,11 @@
     <string name="generic_error">La applicación encontró un error inesperado.</string>
     <string name="queueAdd">Agregar al final</string>
 
+    //--- dialog delete confirmation
+    <string name="DeleteTitle">Eliminar</string>
+    <string name="deleteMessage">Esta seguro que quiere eliminar estos enlaces de audio ?</string>
+    <string name="Okdelete">Borrar</string>
+    <string name="cancelDelete">Cancel</string>
+
 
 </resources>

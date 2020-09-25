@@ -67,6 +67,7 @@ class VideoListDataAdapter(val context: Context,val event:MutableLiveData<VideoL
 
             //--para preguntar por el info del video
             if(!item.esInfoReady){
+                Log.v("msg","Adapter need info $item.url")
                 event.value =
                     VideoListEvent.OnItemGetInfo(
                         position,
@@ -75,7 +76,6 @@ class VideoListDataAdapter(val context: Context,val event:MutableLiveData<VideoL
             }else{
                 holder.title.text = item.title
                 holder.channel.text = item.channel
-                //holder.thumbnail.load(item.thumbnailUrl)
             }
 
             //--para preguntar si tiene cargado el thumbnail del video
@@ -103,12 +103,8 @@ class VideoListDataAdapter(val context: Context,val event:MutableLiveData<VideoL
         var thumbnail : ImageView = root.videoThumbnail
         var idDbField : TextView = root.idDbField
 
-        fun swipeRight(){
-            event.value =
-                VideoListEvent.OnSwipeRight(
-                    idDbField.text.toString().toLong(),
-                    viewUrl.text.toString()
-                )
+        fun swipeRight(index:Int){
+            event.value = VideoListEvent.OnSwipeRight(index)
         }
     }
 

@@ -84,7 +84,7 @@ class SearchFragment : Fragment() {
         lifecycleScope.launch {
             searchTextFlow.collect{ value ->
                 //Log.v("msg","ValorString = $value")
-                if(value.length>3) viewModel.getSearchData(createUrlConnectionStringSearch(pref.server!!,value,50))
+                if(value.length>2) viewModel.getSearchData(createUrlConnectionStringSearch(pref.server!!,value,50))
             }
         }
 

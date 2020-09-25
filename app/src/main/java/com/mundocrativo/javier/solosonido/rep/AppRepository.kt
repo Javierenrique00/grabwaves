@@ -25,8 +25,8 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
         return videoDao.traeVideos()
     }
 
-    fun insertVideo(item:VideoObj){
-        videoDao.insert(item)
+    fun insertVideo(item:VideoObj):Long{
+        return videoDao.insert(item)
     }
 
     fun deleteVideo(key:Long,urlInfo:String){

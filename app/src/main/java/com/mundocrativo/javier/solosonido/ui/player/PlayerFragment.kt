@@ -183,6 +183,8 @@ class PlayerFragment : Fragment() {
         //---cuando se quita un item de la lista
         viewModel.notifyItemRemoved.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
             videoPlayerDataAdapter.notifyItemRemoved(it)
+            val delta = viewModel.videoLista.size - it
+            videoPlayerDataAdapter.notifyItemRangeChanged(it,delta)
         })
 
         //--- Observers del player-----------------
@@ -302,6 +304,12 @@ class PlayerFragment : Fragment() {
                             videoPlayerDataAdapter.moveItem(rec.first,rec.second)
                             videoPlayerDataAdapter.notifyItemChanged(playingIndex)  //---notifica el movimiento del item del play
                             viewModel.moveQueueItem(rec.first,rec.second)
+
+                            //---para refrescar los datos intermedios
+                            val delta =Math.abs(rec.first-rec.second)
+                            var inicial = if(rec.first>rec.second) rec.second else rec.first
+                            videoPlayerDataAdapter.notifyItemRangeChanged(inicial,delta)
+
                         }  //--- da la orden de mover los del player
                         recuerdaPair.clearData()
                     }

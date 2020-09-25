@@ -15,29 +15,26 @@ import com.mundocrativo.javier.solosonido.library.MediaHelper
 import com.mundocrativo.javier.solosonido.model.AudioMetadata
 import com.mundocrativo.javier.solosonido.model.VideoObj
 import com.mundocrativo.javier.solosonido.rep.AppRepository
+import com.mundocrativo.javier.solosonido.util.AppPreferences
 import com.mundocrativo.javier.solosonido.util.Util
 import com.soywiz.klock.DateTime
 import com.squareup.moshi.Moshi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
 class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
 
     //var enlaceExternal :String? = null
     val musicServiceConnection = appRepository.musicServiceConnection
     val openVideoUrlLiveData = appRepository.openVideoUrlLiveData
+    var lastOpenUrl : Pair<Int,String> = Pair(0,"")
     val videoListLiveData : MutableLiveData<List<VideoObj>> by lazy { MutableLiveData<List<VideoObj>>() }
     lateinit var videoLista : MutableList<VideoObj>
     //val videoItemChanged : MutableLiveData<Pair<Int,VideoObj>> by lazy { MutableLiveData<Pair<Int,VideoObj>>() }
     val notifyItemRemoved : MutableLiveData<Int> by lazy { MutableLiveData<Int>() }
+    val listToRemove = mutableListOf<VideoObj>()
 
-    fun insertNewVideo(url:String) =  viewModelScope.launch(Dispatchers.IO){
-        //Log.v("msg","Inserting video to the database")
-        val video = VideoObj()
-        video.url = url
-        video.timestamp = DateTime.now().unixMillisLong
-        appRepository.insertVideo(video)
-        loadVideosFromDb()
+    suspend fun insertNewVideo(videoObj:VideoObj):Long = coroutineScope {
+        appRepository.insertVideo(videoObj)
     }
 
     fun loadVideosFromDb() = viewModelScope.launch(Dispatchers.IO){
@@ -53,6 +50,7 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
     }
 
     fun getUrlInfo(videoIn:VideoObj,ruta:String):VideoObj?{
+        Log.v("msg","trayendo info ${videoIn.url}")
         val info = appRepository.getInfoFromUrl(ruta)
         info?.let {
             return VideoObj(
@@ -77,13 +75,27 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
         return null
     }
 
-    fun deleteVideoListElement(id:Long,urlInfo:String)=viewModelScope.launch(Dispatchers.IO){
-        appRepository.deleteVideo(id,urlInfo)
-        val index = videoLista.indexOfFirst { it.id==id }
-        if(index>=0){
-            //Log.v("msg","---Removiendo de la lista index=$index and id=$id del cache:$urlInfo")
-            videoLista.removeAt(index)
-            notifyItemRemoved.postValue(index)
+    fun deleteVideoListElement(index:Int,urlInfo:String)=viewModelScope.launch(Dispatchers.IO){
+        appRepository.deleteVideo(videoLista[index].id,urlInfo)
+        videoLista.removeAt(index)
+        notifyItemRemoved.postValue(index)
+    }
+
+    fun deleteVideoListSelected(pref: AppPreferences) = viewModelScope.launch(Dispatchers.IO) {
+        listToRemove.clear()
+        videoLista.forEach {
+            if(it.esSelected){
+                appRepository.deleteVideo(it.id,Util.transUrlToServInfo(it.url,pref))
+                listToRemove.add(it)
+            }
+        }
+        listToRemove.forEach {itemDelete ->
+            val index= videoLista.indexOfFirst { it.id==itemDelete.id }
+            if(index>=0){
+                videoLista.removeAt(index)
+                notifyItemRemoved.postValue(index)
+                delay(300)
+            }
         }
     }
 
@@ -102,8 +114,7 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
                 it.channel,
                 mediaUrl,
                 it.thumbnailUrl,
-                Util.getBitmap(it.thumbnailUrl,context)
-            )
+                Util.getBitmap(it.thumbnailUrl,context))
             launch(Dispatchers.Main) {
                 MediaHelper.cmdSendSongWithMetadataToPlayer(queueCmd,audioMetadata, musicServiceConnection)
             }
@@ -111,6 +122,30 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
 
     }
 
+    fun launchPlayerMultiple(queueCmd:Int,pref:AppPreferences,context: Context)= viewModelScope.launch(Dispatchers.IO){
+        val seleccionados = videoLista.filter { it.esSelected }
+        var queueCmdUpdate = queueCmd
+        seleccionados.forEach { video->
+            val info = appRepository.getInfoFromUrl(Util.transUrlToServInfo(video.url,pref))
+            info?.let { info ->
+                val audioMetadata = AudioMetadata(
+                    video.url,
+                    video.title,
+                    video.channel,
+                    Util.createUrlConnectionStringPlay(pref.server!!,video.url,pref.hQ),
+                    video.thumbnailUrl,
+                    Util.getBitmap(video.thumbnailUrl,context))
+                withContext(Dispatchers.Main){
+                    MediaHelper.cmdSendSongWithMetadataToPlayer(queueCmdUpdate,audioMetadata,musicServiceConnection)
+                    queueCmdUpdate = MediaHelper.QUEUE_ADD
+                }
+            }
+        }
+    }
+
+
+
+    fun isVideolistInitialized() = this::videoLista.isInitialized
 
 
 
