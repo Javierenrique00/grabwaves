@@ -72,6 +72,7 @@ class HistoriaFragment : Fragment() {
 
         view.pasteBt.setOnClickListener {
             loadPasteText()
+            Util.clickAnimator(pasteBt)
         }
 
         return view
@@ -107,6 +108,14 @@ class HistoriaFragment : Fragment() {
                     val urlToPlay = Util.createUrlConnectionStringPlay(pref.server!!,it.second,pref.hQ)
                     viewModel.launchPlayer(it.first,urlToPlay,Util.transUrlToServInfo(it.second,pref),it.second,context!!)
                 }
+            }
+        })
+
+        viewModel.openVideoListUrlLiveData.observe(viewLifecycleOwner, Observer {
+            Log.v("msg","Send video List to player")
+            if(!detectVideoListEqual(it.second,viewModel.lastListOpenUrl)){
+                it.second.forEach { video -> insertItemAtTopList(Pair(it.first,video.url)) }
+                viewModel.launchPlayerMultiple(it.first,it.second,pref,context!!)
             }
         })
 
@@ -314,11 +323,12 @@ class HistoriaFragment : Fragment() {
     }
 
     fun dialogPlayMultiple(){
+        val videoListToPlay = viewModel.videoLista.filter { it.esSelected }
         val builder = AlertDialog.Builder(context!!)
             .setTitle(getString(R.string.titlequeue))
             .setMessage(getString(R.string.messageQueue))
-            .setPositiveButton(getString(R.string.queueAdd)) { p0, p1 -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_ADD,pref,context!!) }
-            .setNegativeButton(getString(R.string.queueNew)) { p0, p1 -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_NEW,pref,context!!) }
+            .setPositiveButton(getString(R.string.queueAdd)) { p0, p1 -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_ADD,videoListToPlay,pref,context!!) }
+            .setNegativeButton(getString(R.string.queueNew)) { p0, p1 -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_NEW,videoListToPlay,pref,context!!) }
 
         val dialog =builder.create()
         dialog.show()
@@ -335,5 +345,12 @@ class HistoriaFragment : Fragment() {
         }
     }
 
+    fun detectVideoListEqual(list1:List<VideoObj>,list2:List<VideoObj>):Boolean{
+        if(list1.size != list2.size) return false
+        list1.forEachIndexed { index, videoObj ->
+            if(!videoObj.url.contentEquals(list2[index].url)) return false
+        }
+        return true
+    }
 
 }

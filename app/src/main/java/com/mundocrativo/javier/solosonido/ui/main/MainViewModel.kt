@@ -26,7 +26,9 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
     //var enlaceExternal :String? = null
     val musicServiceConnection = appRepository.musicServiceConnection
     val openVideoUrlLiveData = appRepository.openVideoUrlLiveData
+    val openVideoListUrlLiveData = appRepository.openVideoListUrlLiveData
     var lastOpenUrl : Pair<Int,String> = Pair(0,"")
+    var lastListOpenUrl : List<VideoObj> = mutableListOf()
     val videoListLiveData : MutableLiveData<List<VideoObj>> by lazy { MutableLiveData<List<VideoObj>>() }
     lateinit var videoLista : MutableList<VideoObj>
     //val videoItemChanged : MutableLiveData<Pair<Int,VideoObj>> by lazy { MutableLiveData<Pair<Int,VideoObj>>() }
@@ -122,10 +124,9 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
 
     }
 
-    fun launchPlayerMultiple(queueCmd:Int,pref:AppPreferences,context: Context)= viewModelScope.launch(Dispatchers.IO){
-        val seleccionados = videoLista.filter { it.esSelected }
+    fun launchPlayerMultiple(queueCmd:Int,playVideoList:List<VideoObj>,pref:AppPreferences,context: Context)= viewModelScope.launch(Dispatchers.IO){
         var queueCmdUpdate = queueCmd
-        seleccionados.forEach { video->
+        playVideoList.forEach { video->
             val info = appRepository.getInfoFromUrl(Util.transUrlToServInfo(video.url,pref))
             info?.let { info ->
                 val audioMetadata = AudioMetadata(

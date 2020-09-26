@@ -17,6 +17,7 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
     val infoAdapter = moshi.adapter(InfoObj::class.java)
     val searchAdapter = moshi.adapter(SearchObj::class.java)
     val openVideoUrlLiveData : MutableLiveData<Pair<Int,String>> by lazy { MutableLiveData<Pair<Int,String>>() }
+    val openVideoListUrlLiveData : MutableLiveData<Pair<Int,List<VideoObj>>> by lazy { MutableLiveData<Pair<Int,List<VideoObj>>>() }
     var defaultPlayListId : Long? = null
 
 
@@ -106,6 +107,10 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
 
     fun openVideoUrl(queueCmd:Int,url:String){
         openVideoUrlLiveData.postValue(Pair(queueCmd,url))
+    }
+
+    fun openVideoListUrl(queueCmd:Int,list:List<VideoObj>){
+        openVideoListUrlLiveData.postValue(Pair(queueCmd,list))
     }
 
     //--- para el manejo de las listas de reproduccion y la cola ---------------------------------------

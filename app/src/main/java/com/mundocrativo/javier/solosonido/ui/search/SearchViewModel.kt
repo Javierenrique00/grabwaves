@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mundocrativo.javier.solosonido.library.MediaHelper
 import com.mundocrativo.javier.solosonido.model.VideoObj
 import com.mundocrativo.javier.solosonido.rep.AppRepository
 import com.squareup.moshi.internal.Util
@@ -28,6 +29,11 @@ class SearchViewModel(val appRepository: AppRepository) : ViewModel(){
     fun openVideoUrlLink(queueCmd:Int,url:String){
         appRepository.openVideoUrl(queueCmd, url)
     }
+
+    fun playSelectedVideo(queueCmd: Int){
+        appRepository.openVideoListUrl(queueCmd, videoLista.filter { it.esSelected })
+    }
+
 
     fun getRelatedVideos(url:String)=viewModelScope.launch(Dispatchers.IO){
         //--- debe traer el info del video
@@ -62,5 +68,7 @@ class SearchViewModel(val appRepository: AppRepository) : ViewModel(){
             videoListLiveData.postValue(videoLista)
         }
     }
+
+    fun isVideolistInitialized() = this::videoLista.isInitialized
 
 }

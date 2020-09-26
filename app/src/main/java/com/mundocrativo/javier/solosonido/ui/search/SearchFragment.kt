@@ -86,6 +86,15 @@ class SearchFragment : Fragment() {
             showBackBtState()
         }
 
+        view.multipleCb.setOnCheckedChangeListener { compoundButton, b ->
+            showSelectButtons()
+        }
+
+        view.playSearchBt.setOnClickListener {
+            dialogPlaySelectedItems()
+            Util.clickAnimator(playSearchBt)
+        }
+
         return view
     }
 
@@ -124,6 +133,7 @@ class SearchFragment : Fragment() {
 
         override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
             searchTextApi.genera(searchTb.text.toString())
+            showSearchButton()
         }
 
     }
@@ -131,6 +141,8 @@ class SearchFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         showBackBtState()
+        showSelectButtons()
+        showSearchButton()
     }
 
     private fun setupThumbnailFlow(){
@@ -195,15 +207,20 @@ class SearchFragment : Fragment() {
         searchListAdapter.event.observe(viewLifecycleOwner, Observer {
             when(it){
                 is SearchListEvent.OnItemClick ->{
-                    //viewModel.openVideoUrlLink(it.item.url)
-                    dialogItemCola(it.item.url)
-                    val selecItem = it.item
-                    selecItem.esSelected = true
-                    itemChangeApi.genera(Pair(it.position,selecItem))
-                    MainScope().launch {
-                        delay(100)
-                        selecItem.esSelected = false
+                    if(multipleCb.isChecked){
+                        it.item.esSelected = !it.item.esSelected
+                        searchListAdapter.notifyItemChanged(it.position)
+                    }
+                    else{
+                        dialogItemCola(it.item.url)
+                        val selecItem = it.item
+                        selecItem.esSelected = true
                         itemChangeApi.genera(Pair(it.position,selecItem))
+                        MainScope().launch {
+                            delay(100)
+                            selecItem.esSelected = false
+                            itemChangeApi.genera(Pair(it.position,selecItem))
+                        }
                     }
                 }
                 is SearchListEvent.OnItemGetThumbnail ->{
@@ -230,17 +247,52 @@ class SearchFragment : Fragment() {
             .setPositiveButton(getString(R.string.queueAdd)) { p0, p1 -> viewModel.openVideoUrlLink(MediaHelper.QUEUE_ADD,originalUrl) }
             .setNeutralButton(getString(R.string.queueNext)) { p0, p1 -> viewModel.openVideoUrlLink(MediaHelper.QUEUE_NEXT,originalUrl) }
             .setNegativeButton(getString(R.string.queueNew)) { p0, p1 -> viewModel.openVideoUrlLink(MediaHelper.QUEUE_NEW,originalUrl) }
-
         val dialog =builder.create()
-
         dialog.show()
     }
+
+    fun dialogPlaySelectedItems(){
+        val builder = AlertDialog.Builder(context!!)
+            .setTitle(getString(R.string.titlequeue))
+            .setMessage(getString(R.string.messageQueue))
+            .setPositiveButton(getString(R.string.queueAdd)) { p0, p1 -> viewModel.playSelectedVideo(MediaHelper.QUEUE_ADD) }
+            .setNegativeButton(getString(R.string.queueNew)) { p0, p1 -> viewModel.playSelectedVideo(MediaHelper.QUEUE_NEW) }
+        val dialog =builder.create()
+        dialog.show()
+    }
+
+    fun showSearchButton(){
+        if(searchTb.text.toString().isEmpty()) {
+            searchImg.visibility = View.VISIBLE
+        }
+        else{
+            searchImg.visibility = View.GONE
+        }
+    }
+
 
     fun showBackBtState(){
         if(viewModel.recVideoList.size==0){
             backBt.setImageResource(R.drawable.ic_baseline_arrow_back_grey)
+            viewModel.recVideoList.clear()
         }else{
             backBt.setImageResource(R.drawable.ic_baseline_arrow_back_24)
+        }
+    }
+
+    fun showSelectButtons(){
+        if(multipleCb.isChecked){
+            playSearchBt.visibility = View.VISIBLE
+        }else{
+            playSearchBt.visibility = View.GONE
+            if(viewModel.isVideolistInitialized()){
+                viewModel.videoLista.forEachIndexed { index, videoObj ->
+                    if(videoObj.esSelected){
+                        videoObj.esSelected = false
+                        searchListAdapter.notifyItemChanged(index,videoObj)
+                    }
+                }
+            }
         }
     }
 
