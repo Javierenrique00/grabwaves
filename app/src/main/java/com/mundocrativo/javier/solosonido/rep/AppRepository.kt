@@ -8,6 +8,8 @@ import com.mundocrativo.javier.solosonido.db.QueueFieldDao
 import com.mundocrativo.javier.solosonido.db.VideoDao
 import com.mundocrativo.javier.solosonido.model.*
 import com.mundocrativo.javier.solosonido.service.MusicServiceConnection
+import com.mundocrativo.javier.solosonido.ui.historia.KIND_URL_PLAYLIST
+import com.mundocrativo.javier.solosonido.ui.historia.KIND_URL_VIDEO
 import com.squareup.moshi.Moshi
 import java.lang.Exception
 
@@ -16,10 +18,11 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
     val moshi = Moshi.Builder().build()
     val infoAdapter = moshi.adapter(InfoObj::class.java)
     val searchAdapter = moshi.adapter(SearchObj::class.java)
+    val playlistAdapter = moshi.adapter(PlaylistObj::class.java)
     val openVideoUrlLiveData : MutableLiveData<Pair<Int,String>> by lazy { MutableLiveData<Pair<Int,String>>() }
     val openVideoListUrlLiveData : MutableLiveData<Pair<Int,List<VideoObj>>> by lazy { MutableLiveData<Pair<Int,List<VideoObj>>>() }
     var defaultPlayListId : Long? = null
-
+    val playVideoListPair : MutableLiveData<Pair<Int,List<VideoObj>>> by lazy { MutableLiveData<Pair<Int,List<VideoObj>>>() } //--- para enviar el listado al player
 
 
     fun listVideos():List<VideoObj>{
@@ -37,7 +40,7 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
 
     fun getInfoFromUrl(url:String):InfoObj?{
         var resultado : InfoObj? = null
-        Log.v("msg","traeinfo: $url")
+        //Log.v("msg","traeinfo: $url")
         val strResult = directCache.trae(url)
         //Log.v("msg","before Moshi: $strResult")
         strResult?.let {
@@ -93,6 +96,8 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
                 0,
                 0,
                 0,
+                0,
+                0,
                 false,
                 false,
                 false,
@@ -103,6 +108,79 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
             ))
         }
         return  resultList
+    }
+
+    fun getPlayListFromUrl(video:VideoObj,url:String,msgError:String):VideoObj{
+        //Log.v("msg","Buscando Playlistinfo:$url")
+        val strResult = directCache.trae(url)
+        var resultado = VideoObj()
+        strResult?.let {
+            try{
+                val playlist = playlistAdapter.fromJson(strResult)
+                playlist?.let { playlist ->
+                    if(!playlist.error){
+                        //Log.v("msg","Playlist Conversion total_items=${playlist.total_items}")
+                        val videoList = convertPlaylistToVideoList(playlist)
+                        resultado.url = video.url
+                        resultado.title = playlist.title?:""
+                        resultado.itemPosition = video.itemPosition
+                        resultado.total_items = videoList.size
+                        resultado.thumbnailUrl = playlist.items[0].thumbnail?:""
+                        resultado.duration = videoList.fold(0){ acc, videoObj -> videoObj.duration + acc }
+                        resultado.kindMedia = KIND_URL_PLAYLIST
+                        resultado.esInfoReady = true
+                    }else{
+                        val vidReturnError = VideoObj()
+                        with(vidReturnError){
+                            id = video.id
+                            title = msgError
+                            itemPosition = video.itemPosition
+                            esInfoReady = true
+                            esUrlReady = true
+                            timestamp = video.timestamp
+                            kindMedia = video.kindMedia
+                        }
+                        vidReturnError.url = video.url
+                        return vidReturnError
+                    }
+                }
+            }catch (e:Exception){
+                Log.e("msg","Error en la conversion Moshi del Playlist ${e.message}")
+            }finally {
+                return resultado
+            }
+        }
+        return resultado
+    }
+
+    fun getPlayListFromUrl(url:String):List<VideoObj>{
+        val strResult = directCache.trae(url)
+        val resultado = mutableListOf<VideoObj>()
+        strResult?.let {
+            try{
+                val playlist = playlistAdapter.fromJson(strResult)
+                playlist?.let { playlist ->
+                    //Log.v("msg","Playlist Conversion total_items=${playlist.total_items}")
+                    resultado.addAll(convertPlaylistToVideoList(playlist))
+
+                }
+            }catch (e:Exception){
+                Log.e("msg","Error en la conversion Moshi del Playlist ${e.message}")
+            }finally {
+                return resultado
+            }
+        }
+        return resultado
+    }
+
+    private fun convertPlaylistToVideoList(playlist:PlaylistObj):List<VideoObj>{
+        val resultList = mutableListOf<VideoObj>()
+        playlist.items.forEach {
+            resultList.add(
+                VideoObj(
+                0, it.url?:"",it.title?:"",it.author?:"",it.thumbnail?:"",0,0,it.duration,0, KIND_URL_VIDEO,0,true,false,false,0,null,false,""))
+        }
+        return resultList
     }
 
     fun openVideoUrl(queueCmd:Int,url:String){

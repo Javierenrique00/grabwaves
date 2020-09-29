@@ -17,6 +17,8 @@ data class VideoObj(
     var height:Int,
     var duration:Int,
     var timestamp:Long,
+    var kindMedia:Int, //---para las listas
+    var total_items:Int,  //---cantidad de videos en la lista
     @Ignore var esInfoReady:Boolean,
     @Ignore var esUrlReady:Boolean,
     @Ignore var esSelected:Boolean,
@@ -26,5 +28,5 @@ data class VideoObj(
     @Ignore var durationStr:String
 
 ){
-    constructor() : this(0,"","","","",0,0,0,0L,false,false,false,0,null,false,"")
+    constructor() : this(0,"","","","",0,0,0,0L,0,0,false,false,false,0,null,false,"")
 }

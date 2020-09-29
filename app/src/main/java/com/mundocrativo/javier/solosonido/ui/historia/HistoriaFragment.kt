@@ -50,7 +50,7 @@ class HistoriaFragment : Fragment() {
     private val viewModel by sharedViewModel<MainViewModel>()
     private lateinit var pref : AppPreferences
     private lateinit var videoListDataAdapter: VideoListDataAdapter
-    private lateinit var videoInfoApi: VideoInfoApi
+    private lateinit var videoPairApi : VideoPairApi
     private lateinit var imageLoader : ImageLoader
 
 
@@ -63,7 +63,7 @@ class HistoriaFragment : Fragment() {
         }
 
         view.playIv.setOnClickListener {
-            dialogPlayMultiple()
+            dialogPlayMultiple(viewModel.videoLista.filter { it.esSelected })
         }
 
         view.deleteIv.setOnClickListener {
@@ -101,21 +101,25 @@ class HistoriaFragment : Fragment() {
         })
 
         viewModel.openVideoUrlLiveData.observe(viewLifecycleOwner, Observer {
-            Log.v("msg","OPEN video ${it.second}")
+            //Log.v("msg","OPEN video ${it.second}")
             if(!((viewModel.lastOpenUrl.first==it.first) and (viewModel.lastOpenUrl.second.contentEquals(it.second)))){
                 insertItemAtTopList(it)
                 if(it.first!=MediaHelper.QUEUE_NO_PLAY){
-                    val urlToPlay = Util.createUrlConnectionStringPlay(pref.server!!,it.second,pref.hQ)
-                    viewModel.launchPlayer(it.first,urlToPlay,Util.transUrlToServInfo(it.second,pref),it.second,context!!)
+                    val videoToPlay = VideoObj()
+                    videoToPlay.url = it.second
+                    val list = mutableListOf(videoToPlay)
+                    //Log.v("msg","Trying to play url: size =${list.size} url=${list[0].url}")
+                    viewModel.launchPlayerMultiple(it.first, list,pref,context!!)
                 }
             }
         })
 
         viewModel.openVideoListUrlLiveData.observe(viewLifecycleOwner, Observer {
-            Log.v("msg","Send video List to player")
+            //Log.v("msg","Send video List to player")
             if(!detectVideoListEqual(it.second,viewModel.lastListOpenUrl)){
-                it.second.forEach { video -> insertItemAtTopList(Pair(it.first,video.url)) }
-                viewModel.launchPlayerMultiple(it.first,it.second,pref,context!!)
+                var queueCmd = it.first
+                if(it.first!=MediaHelper.QUEUE_NEW_NOSAVE) it.second.forEach { video -> insertItemAtTopList(Pair(it.first,video.url)) } else queueCmd = MediaHelper.QUEUE_NEW
+                viewModel.launchPlayerMultiple(queueCmd,it.second,pref,context!!)
             }
         })
 
@@ -136,7 +140,7 @@ class HistoriaFragment : Fragment() {
 
     override fun onDestroy() {
         super.onDestroy()
-        videoInfoApi.acaba()
+        videoPairApi.acaba()
     }
 
     //---https://stackoverflow.com/questions/19177231/android-copy-paste-from-clipboard-manager
@@ -152,39 +156,33 @@ class HistoriaFragment : Fragment() {
             enlaceLetras = item.text.toString()
         }
         if(!enlaceLetras.isEmpty()) {
-            //viewModel.insertNewVideo(enlaceLetras)
             insertItemAtTopList(Pair(MediaHelper.QUEUE_NO_PLAY,enlaceLetras))
         }
     }
 
     private fun setupRecyclerFlow(){
         //---inicia los eventos del flow del video
-        videoInfoApi = VideoInfoApi()
-        val flujoVideo = flowFromVideo(
-            videoInfoApi
-        ).buffer(Channel.UNLIMITED).map { viewModel.getUrlInfo(it,Util.transUrlToServInfo(it.url,pref)) }
+        videoPairApi = VideoPairApi()
+        val flujoVideo = flowFromVideoPair(videoPairApi).buffer(Channel.UNLIMITED).map { viewModel.getUrlInfo(it.first,it.second,pref,getString(R.string.msgPlayListError)) }
 
         //--- Se quita el GLobalScope
         lifecycleScope.launch(Dispatchers.IO) {
             flujoVideo.collect{
-                Log.v("msg","Collecting observer de flujoVide ${it!!.title}")
-                if(it!=null) {
-                    Log.v("msg","llegó url: ${it.url} titulo:${it.title} duration:${it.duration}")
-                    withContext(Dispatchers.Main){ updateItem(it.itemPosition,it) }
+                //Log.v("msg","llegó url: ${it.second.url} titulo:${it.second.title} duration:${it.second.duration} position:${it.second.itemPosition}")
+                withContext(Dispatchers.Main){ updateItem(it.first,it.second) }
 
-                    //---para pedir bajar una imagen
-                    val request = ImageRequest.Builder(context!!)
-                        .data(it.thumbnailUrl)
-                        .target { drawable ->
+                //---para pedir bajar una imagen
+                val request = ImageRequest.Builder(context!!)
+                    .data(it.second.thumbnailUrl)
+                    .target { drawable ->
 
-                            val item = it
-                            item.esUrlReady = true
-                            item.thumbnailImg = drawable
-                            updateItem(it.itemPosition,it)
-                        }
-                        .build()
-                    val disposable = imageLoader.enqueue(request)
-                }
+                         val item = it.second
+                        item.esUrlReady = true
+                        item.thumbnailImg = drawable
+                        updateItem(it.first,item)
+                    }
+                    .build()
+                val disposable = imageLoader.enqueue(request)
 
             }
         }
@@ -206,21 +204,19 @@ class HistoriaFragment : Fragment() {
         videoListDataAdapter.event.observe(viewLifecycleOwner, Observer {
             when(it){
                 is VideoListEvent.OnItemClick ->{
+                    //Log.v("msg","Click en position:${it.position} kind:${it.item.kindMedia}  title:${it.item.title} url:${it.item.url} esInfoReady:${it.item.esInfoReady} esUrlReady:${it.item.esUrlReady} ${it.item.thumbnailUrl}")
                     if(selectCb.isChecked){
                         //--- selección multiple
                         val itemSelected = it.item
                         itemSelected.esSelected = !it.item.esSelected
-                        //itemChangeApi.genera(Pair(it.position,itemSelected))
                         updateItem(it.position,itemSelected)
                     }
                     else{
                         //--- play directo
                         val itemSelected = it.item
                         itemSelected.esSelected = true
-                        //itemChangeApi.genera(Pair(it.position,itemSelected))
                         updateItem(it.position,itemSelected)
-                        val urlToPlay = Util.createUrlConnectionStringPlay(pref.server!!,it.item.url,pref.hQ)
-                        dialogItemCola(urlToPlay,Util.transUrlToServInfo(it.item.url,pref),it.item.url)//-- es el dialogo para el play a la cola
+                        dialogPlayMultiple(mutableListOf(itemSelected))
                         MainScope().launch {
                             delay(100)
                             itemSelected.esSelected = false
@@ -230,16 +226,14 @@ class HistoriaFragment : Fragment() {
                     }
                 }
                 is VideoListEvent.OnItemGetInfo ->{
-                    Log.v("msg","Generando Flow ${it.item.url}")
-                    val dataWithPosition = it.item
-                    dataWithPosition.itemPosition = it.position
-                    videoInfoApi.genera(dataWithPosition)
+                    //Log.v("msg","Generando Flow ${it.item.url}")
+                    videoPairApi.genera(Pair(it.position,it.item))
                 }
                 is VideoListEvent.OnStartDrag ->{
                     itemTouchHelper.startDrag(it.viewHolder)
                 }
                 is VideoListEvent.OnSwipeRight ->{
-                    Log.v("msg","Recibe evento para borrar por swipe---------==>${it.index}")
+                    //Log.v("msg","Recibe evento para borrar por swipe---------==>${it.index}")
                     val urlInfo = Util.transUrlToServInfo(viewModel.videoLista[it.index].url,pref)
                     viewModel.deleteVideoListElement(it.index,urlInfo)
                 }
@@ -253,16 +247,31 @@ class HistoriaFragment : Fragment() {
                 val video = VideoObj()
                 video.url = pair.second
                 video.timestamp = DateTime.now().unixMillisLong
+
+                when(Util.checkKindLink(pair.second)){
+                    KIND_URL_PLAYLIST ->{
+                        //Log.v("msg","Kind Playlist")
+                        video.kindMedia = KIND_URL_PLAYLIST
+                    }
+                    KIND_URL_VIDEO ->{
+                        //Log.v("msg","Kind Video")
+                        video.kindMedia = KIND_URL_VIDEO
+                    }
+                    else ->{
+                        //Log.v("msg","Kind Undefined trying video")
+                        video.kindMedia = KIND_URL_VIDEO
+                    }
+                }
                 val id = viewModel.insertNewVideo(video)
                 video.id = id
                 video.itemPosition = 0
-                Log.v("msg","insertando item: $video")
+                //Log.v("msg","insertando item: $video")
                 viewModel.lastOpenUrl = pair
                 if(viewModel.isVideolistInitialized()){
                     viewModel.videoLista.add(0, video)
                 }else{
-                    viewModel.videoLista = mutableListOf()
-                    viewModel.videoLista.add(0, video)
+                    viewModel.videoLista = mutableListOf(video)
+                    //viewModel.videoLista.add(0, video)
                 }
             }
             job.join()
@@ -271,6 +280,7 @@ class HistoriaFragment : Fragment() {
             if(viewModel.videoLista.size>1) videoListDataAdapter.notifyItemRangeChanged(1,delta)
         }
     }
+
 
     fun showButtons(){
         if(selectCb.isChecked){
@@ -284,7 +294,7 @@ class HistoriaFragment : Fragment() {
     }
 
     fun updateItem(index:Int,item:VideoObj){
-                Log.v("msg","---Item cambiado pos=${index} videoTitle=${item.title} selected=${item.esSelected}")
+                //Log.v("msg","---Item cambiado pos=${index} videoTitle=${item.title} selected=${item.esSelected}")
                 viewModel.videoLista[index].title = item.title
                 viewModel.videoLista[index].channel = item.channel
                 viewModel.videoLista[index].thumbnailUrl = item.thumbnailUrl
@@ -293,21 +303,12 @@ class HistoriaFragment : Fragment() {
                 viewModel.videoLista[index].thumbnailImg = item.thumbnailImg
                 viewModel.videoLista[index].esSelected = item.esSelected
                 viewModel.videoLista[index].duration= item.duration
-                videoListDataAdapter.notifyItemChanged(index,item)
+                viewModel.videoLista[index].total_items = item.total_items
+                viewModel.videoLista[index].kindMedia = item.kindMedia
+
+                videoListDataAdapter.notifyItemChanged(index,viewModel.videoLista[index])
     }
 
-
-    fun dialogItemCola(mediaUrl: String,infoUrl:String,originalUrl:String){
-        val builder = AlertDialog.Builder(context!!)
-            .setTitle(getString(R.string.titlequeue))
-            .setMessage(getString(R.string.messageQueue))
-            .setPositiveButton(getString(R.string.queueAdd)) { p0, p1 -> viewModel.launchPlayer(MediaHelper.QUEUE_ADD,mediaUrl,infoUrl,originalUrl,context!!) }
-            .setNeutralButton(getString(R.string.queueNext)) { p0, p1 -> viewModel.launchPlayer(MediaHelper.QUEUE_NEXT,mediaUrl,infoUrl,originalUrl,context!!) }
-            .setNegativeButton(getString(R.string.queueNew)) { p0, p1 -> viewModel.launchPlayer(MediaHelper.QUEUE_NEW,mediaUrl,infoUrl,originalUrl,context!!) }
-
-        val dialog =builder.create()
-        dialog.show()
-    }
 
     fun dialogDeleteMultiple(){
         val builder = AlertDialog.Builder(context!!)
@@ -322,13 +323,14 @@ class HistoriaFragment : Fragment() {
         dialog.show()
     }
 
-    fun dialogPlayMultiple(){
-        val videoListToPlay = viewModel.videoLista.filter { it.esSelected }
+    fun dialogPlayMultiple(videoListToPlay:List<VideoObj>){
+        //val videoListToPlay = viewModel.videoLista.filter { it.esSelected }
         val builder = AlertDialog.Builder(context!!)
             .setTitle(getString(R.string.titlequeue))
             .setMessage(getString(R.string.messageQueue))
             .setPositiveButton(getString(R.string.queueAdd)) { p0, p1 -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_ADD,videoListToPlay,pref,context!!) }
             .setNegativeButton(getString(R.string.queueNew)) { p0, p1 -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_NEW,videoListToPlay,pref,context!!) }
+            .setNeutralButton(getString(R.string.queueNext)) { p0, p1 -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_NEXT,videoListToPlay,pref,context!!) }
 
         val dialog =builder.create()
         dialog.show()
@@ -354,3 +356,7 @@ class HistoriaFragment : Fragment() {
     }
 
 }
+
+const val KIND_URL_VIDEO = 1
+const val KIND_URL_PLAYLIST = 2
+const val KIND_URL_UNDEFINED = 0

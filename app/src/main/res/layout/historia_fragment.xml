@@ -54,7 +54,7 @@
         android:id="@+id/pasteBt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
+        android:layout_marginStart="32dp"
         android:layout_marginTop="8dp"
         android:src="@drawable/ic_paste_link_plain"
         app:layout_constraintStart_toStartOf="parent"

@@ -53,11 +53,7 @@ class VideoListDataAdapter(val context: Context,val event:MutableLiveData<VideoL
             //Log.v("msg","traeinfo: Duration:${item.duration}")
 
             holder.layout.setOnClickListener {
-                event.value =
-                    VideoListEvent.OnItemClick(
-                        position,
-                        item
-                    )
+                event.value = VideoListEvent.OnItemClick(position, item)
             }
 
             //--- pone el color del fondo
@@ -67,23 +63,27 @@ class VideoListDataAdapter(val context: Context,val event:MutableLiveData<VideoL
 
             //--para preguntar por el info del video
             if(!item.esInfoReady){
-                Log.v("msg","Adapter need info $item.url")
-                event.value =
-                    VideoListEvent.OnItemGetInfo(
-                        position,
-                        item
-                    )
+                //Log.v("msg","Adapter need info $item.url")
+                event.value = VideoListEvent.OnItemGetInfo(position, item)
             }else{
                 holder.title.text = item.title
-                holder.channel.text = item.channel
+
+                holder.channel.text = when(item.kindMedia){
+                    KIND_URL_VIDEO -> item.channel
+                    KIND_URL_PLAYLIST -> "Playlist - ${item.total_items}"
+                    else -> item.channel
+                }
             }
 
             //--para preguntar si tiene cargado el thumbnail del video
             if(!item.esUrlReady){
-                //holder.thumbnail.setImageDrawable(context.resources.getDrawable(R.drawable.ic_baseline_ondemand_video_24))
                 holder.thumbnail.setImageDrawable(ResourcesCompat.getDrawable(context.resources,R.drawable.ic_baseline_ondemand_video_24,context.theme))
             }else{
-                holder.thumbnail.setImageDrawable(item.thumbnailImg)
+                if(item.thumbnailImg!=null){
+                    holder.thumbnail.setImageDrawable(item.thumbnailImg)
+                }else{
+                    holder.thumbnail.setImageDrawable(ResourcesCompat.getDrawable(context.resources,R.drawable.ic_baseline_ondemand_video_24,context.theme))
+                }
             }
 
             //--para cargar id de la base de datos en el campo idDbField que es un dummy
@@ -91,8 +91,6 @@ class VideoListDataAdapter(val context: Context,val event:MutableLiveData<VideoL
 
         }
     }
-
-
 
     class VideoListViewHolder(root: View,val event: MutableLiveData<VideoListEvent>) : RecyclerView.ViewHolder(root){
         var viewUrl : TextView = root.urlTt

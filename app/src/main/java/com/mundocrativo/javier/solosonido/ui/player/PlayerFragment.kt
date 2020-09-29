@@ -23,6 +23,7 @@ import com.mundocrativo.javier.solosonido.ui.historia.*
 import com.mundocrativo.javier.solosonido.ui.main.MainViewModel
 import com.mundocrativo.javier.solosonido.util.AppPreferences
 import com.mundocrativo.javier.solosonido.util.Util
+import com.mundocrativo.javier.solosonido.util.toMediaQueueItem
 import com.mundocrativo.javier.solosonido.util.trackNumber
 import com.soywiz.klock.DateTime
 import com.soywiz.klock.ISO8601
@@ -42,7 +43,7 @@ class PlayerFragment : Fragment() {
     private val viewModel by sharedViewModel<PlayerViewModel>()
 
     private lateinit var videoPlayerDataAdapter: VideoPlayerDataAdapter
-    private lateinit var videoInfoApi: VideoInfoApi
+    private lateinit var videoPairApi : VideoPairApi
     private lateinit var itemChangeApi: ItemChangeApi
     private lateinit var moveApi: MoveApi
     private lateinit var pref : AppPreferences
@@ -109,14 +110,16 @@ class PlayerFragment : Fragment() {
         setupVideoPlayerRecyclerAdapter()
         imageLoader = Coil.imageLoader(context!!)
 
+        //--- este es la posición relativa a la cola que se trae
         viewModel.playBackState.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
             val isPlaying = it.state
             val actQueueItem  = it.activeQueueItemId
-            Log.v("msg","queue Playback State Position=${it.position}  estate=$isPlaying activeQueueItem=$actQueueItem")
+            //Log.v("msg","queue Playback State Position=${it.position}  estate=$isPlaying activeQueueItem=$actQueueItem")
             showPlayPauseButton()
-            updateVideoListaEsPlaying(actQueueItem.toInt())
+            //updateVideoListaEsPlaying(actQueueItem.toInt()) --- todo, se quitó porque por ahora no lo vamos a revizar
         })
 
+        //--- es el now playing. no se ve la posición en la cola
         viewModel.musicServiceConnection.nowPlaying.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
             seekBarControl.isRunning = false
             val tama= it.description.mediaId!!.length
@@ -125,42 +128,43 @@ class PlayerFragment : Fragment() {
                 val mediaId = it.description.mediaId
                 val titulo = it.description.title
                 val metadataString = it.getString("METADATA_KEY_TITLE")
-                Log.v("msg","queue Now playing in fragment:${mediaId} | titulo=$titulo  metadataString=$metadataString trackNumber=${it.trackNumber}") //--tracknumber no sirve para la queueIndex
+                //Log.v("msg","queue Now playing in fragment:${mediaId} | titulo=$titulo  metadataString=$metadataString")
                 viewModel.getInfoNowPlaying(Util.transUrlToServInfo(mediaId!!,pref))
                 viewModel.sendPlayDuration() //--- lanza el comando de la duracion
                 updateSeekBar()  //-- para que haya un ciclo cada segundo para actualizar el seekbar
             }
         })
 
+        //--- esta es la cola del player
         viewModel.queueLiveData.observe(viewLifecycleOwner, androidx.lifecycle.Observer { queueList ->
             //--- hay que hacer la conversion a VideoObj
 
-            val tempList = mutableListOf<VideoObj>()
-            queueList.forEach {queueItem ->
-                val item = MediaHelper.convMediaItemToVideoObj(queueItem,context!!)
-                tempList.add(item)
-            }
-            val iguales = checkTwoVideoListEqual(tempList,viewModel.videoLista)
-            if(!iguales){
-                viewModel.videoLista.clear()
-                queueList.forEach {queueItem ->
-                    viewModel.videoLista.add(MediaHelper.convMediaItemToVideoObj(queueItem,context!!))
-                    //Log.v("msg","Cargando Conversion MediaId=->${queueItem.description.mediaId} ")
-                    videoPlayerDataAdapter.submitList(viewModel.videoLista)
-                    videoPlayerDataAdapter.notifyDataSetChanged()
-                }
-            }else{
-                //---debe chequear que tenga cargada la lista en el adapter
-                val size = videoPlayerDataAdapter.currentList.size
-                //Log.v("msg","Chequeando si tiene cargado el adapter cargado size=$size")
-                if(size==0){
-                    videoPlayerDataAdapter.submitList(viewModel.videoLista)
-                    videoPlayerDataAdapter.notifyDataSetChanged()
-                }
-            }
-            viewModel.updateCurrentPlayList()
-
-            Log.v("msg","Cargando la cola del player para mostrar Fragmento ${queueList.size}  iguales=$iguales")
+//            val tempList = mutableListOf<VideoObj>()
+//            queueList.forEach {queueItem ->
+//                val item = MediaHelper.convMediaItemToVideoObj(queueItem,context!!)
+//                tempList.add(item)
+//            }
+//            val iguales = checkTwoVideoListEqual(tempList,viewModel.videoLista)
+//            if(!iguales){
+//                viewModel.videoLista.clear()
+//                queueList.forEach {queueItem ->
+//                    viewModel.videoLista.add(MediaHelper.convMediaItemToVideoObj(queueItem,context!!))
+//                    Log.v("msg","Cargando Conversion MediaId=->${queueItem.description.mediaId} queueId = ${queueItem.queueId}")
+//                    videoPlayerDataAdapter.submitList(viewModel.videoLista)
+//                    videoPlayerDataAdapter.notifyDataSetChanged()
+//                }
+//            }else{
+//                //---debe chequear que tenga cargada la lista en el adapter
+//                val size = videoPlayerDataAdapter.currentList.size
+//                //Log.v("msg","Chequeando si tiene cargado el adapter cargado size=$size")
+//                if(size==0){
+//                    videoPlayerDataAdapter.submitList(viewModel.videoLista)
+//                    videoPlayerDataAdapter.notifyDataSetChanged()
+//                }
+//            }
+//            viewModel.updateCurrentPlayList()
+//
+//            Log.v("msg","Cargando la cola del player para mostrar Fragmento ${queueList.size}  iguales=$iguales")
         })
 
 //-- se quitó porque no se usa
@@ -169,12 +173,13 @@ class PlayerFragment : Fragment() {
 //        })
 
         viewModel.durationLiveData.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
-            Log.v("msg","queue Exoplayer--> Position:${it.first} ContentDuration:${it.second} QueueIndex:${it.third}")
+            //Log.v("msg","queue Exoplayer--> Position:${it.first} ContentDuration:${it.second} QueueIndex:${it.third}")
             seekBarControl.setProgress(it.first,it.second)
             timeSeekbar.max = (it.second/1000L).toInt()
              if((it.second>0) and (it.second<86400000)){
                  seekBarControl.maxStr = Util.shortHour(ISO8601.TIME_LOCAL_COMPLETE.format(TimeSpan(it.second*1.0)))
                  savePlayingState(viewModel.actualQueueIndex,(it.first/1000L).toInt())
+                 if((viewModel.actualQueueIndex!=it.third) or (viewModel.actualQueueIndex==0)) updateVideoListaEsPlaying(it.third) //----todo vamos a probar si esto sirva para poner el item actual en play
             }else{
                  seekBarControl.maxStr = "00:00:00"
             }
@@ -196,15 +201,39 @@ class PlayerFragment : Fragment() {
             }
         })
 
+        //--- esta es la lista que ahora vamos a recibir directamente del history
+        viewModel.playVideoListPair.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
+            //--- delte
+            it.second.forEach {
+                it.esSelected = false
+                it.esUrlReady = false
+                it.esInfoReady = false
+            }
+            when(it.first){
+                MediaHelper.QUEUE_NEW ->{
+                    viewModel.videoLista.clear()
+                    viewModel.videoLista.addAll(it.second)
+                }
+                MediaHelper.QUEUE_ADD ->{
+                    viewModel.videoLista.addAll(it.second)
+                }
+                MediaHelper.QUEUE_NEXT->{
+                    if(viewModel.videoLista.size>viewModel.actualQueueIndex) viewModel.videoLista.addAll(viewModel.actualQueueIndex + 1,it.second) else viewModel.videoLista.addAll(viewModel.actualQueueIndex,it.second)
+                }
+            }
+            viewModel.updateCurrentPlayList()
+            videoPlayerDataAdapter.submitList(viewModel.videoLista)
+            videoPlayerDataAdapter.notifyDataSetChanged()
+        })
 
     }
 
     override fun onResume() {
         super.onResume()
         //--- para actualizar el contenido apenas se carga
-        Log.v("msg","--- Resume view")
-        Log.v("msg","videoListSize ${viewModel.videoLista.size}")
-        if(viewModel.videoLista.size==0) viewModel.LoadDefaultPlayListToPlayer(context!!,pref)
+        //Log.v("msg","--- Resume view")
+        //Log.v("msg","videoListSize ${viewModel.videoLista.size}")
+        if(viewModel.videoLista.size==0) viewModel.LoadDefaultPlayListToPlayer(pref)
 
         viewModel.sendPlayDuration()
 
@@ -214,41 +243,36 @@ class PlayerFragment : Fragment() {
         super.onDestroyView()
         //Log.v("msg","---- Destroy view")
         //------------
-        videoInfoApi.acaba()
+        videoPairApi.acaba()
         itemChangeApi.acaba()
         moveApi.acaba()
     }
 
     private fun setupRecyclerFlow(){
         //---inicia los eventos del flow del video
-        videoInfoApi = VideoInfoApi()
-        val flujoVideo = flowFromVideo(
-            videoInfoApi
-        ).buffer(Channel.UNLIMITED).map { viewModel.getUrlInfo(it,Util.transUrlToServInfo(it.url,pref)) }
+        videoPairApi = VideoPairApi()
+        val flujoVideo = flowFromVideoPair(videoPairApi).buffer(Channel.UNLIMITED).map { viewModel.getUrlInfo(it.first,it.second,Util.transUrlToServInfo(it.second.url,pref)) }
 
         //--- Se quita el GLobalScope
-        lifecycleScope.launch {
+        lifecycleScope.launch(Dispatchers.IO) {
             flujoVideo.collect{
                 lifecycleScope.launch {
                     if (it != null) {
                         delay(TIME_FOR_PAINT_UPDATE)
                         //Log.v( "msg", "Llegó la info url: ${it.url} titulo:${it.title} for position:${it.itemPosition}" )
                         //--para poner el que está sonando directamente en el es playing
-                        if (it.itemPosition == viewModel.playBackState.value!!.activeQueueItemId.toInt()) it.esPlaying =
-                            true
-                        //itemChangeApi.genera(Pair(it.itemPosition,it))
-                        updateItem(it.itemPosition, it)
+                        //if (it.first == viewModel.playBackState.value!!.activeQueueItemId.toInt()) it.second.esPlaying = true todo esto nos e que hace por ahor alo quito para que no interrumpa
+                        updateItem(it.first, it.second)
 
                         //---para pedir bajar una imagen
                         val request = ImageRequest.Builder(context!!)
-                            .data(it.thumbnailUrl)
+                            .data(it.second.thumbnailUrl)
                             .target { drawable ->
 
                                 val item = it
-                                item.esUrlReady = true
-                                item.thumbnailImg = drawable
-                                //itemChangeApi.genera(Pair(it.itemPosition,item))
-                                updateItem(it.itemPosition, it)
+                                item.second.esUrlReady = true
+                                item.second.thumbnailImg = drawable
+                                updateItem(it.first, it.second)
                                 //Log.v("msg","Llego thumbnail:${it.thumbnailUrl}")
                             }
                             .build()
@@ -315,7 +339,6 @@ class PlayerFragment : Fragment() {
                     }
                 }
 
-
             }
         }
 
@@ -371,9 +394,7 @@ class PlayerFragment : Fragment() {
                 }
                 is VideoPlayerListEvent.OnItemGetInfo ->{
                     //Log.v("msg","Asking for Info: ${it.position}")
-                    val dataWithPosition = it.item
-                    dataWithPosition.itemPosition = it.position
-                    videoInfoApi.genera(dataWithPosition)
+                    videoPairApi.genera(Pair(it.position,it.item))
                 }
                 is VideoPlayerListEvent.OnStartDrag ->{
                     playerItemTouchHelper.startDrag(it.viewHolder)
@@ -411,7 +432,7 @@ class PlayerFragment : Fragment() {
 
     fun savePlayingState(indexSong:Int,progress:Int){
         if(!viewModel.initLoading) {
-            Log.v("msg", "saving state: index:$indexSong Progress=$progress")
+            //Log.v("msg", "saving state: index:$indexSong Progress=$progress")
             pref.lastSongIndexPlayed = indexSong
             pref.lastTimePlayed = progress
         }

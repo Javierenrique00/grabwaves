@@ -19,9 +19,9 @@ class SearchViewModel(val appRepository: AppRepository) : ViewModel(){
 
 
     fun getSearchData(searchURL:String)=viewModelScope.launch(Dispatchers.IO){
-        Log.v("msg","Search URL: $searchURL")
+        //Log.v("msg","Search URL: $searchURL")
         val data = appRepository.getSearchFromUrl(searchURL)
-        Log.v("msg","Resultados.size=${data.size}")
+        //Log.v("msg","Resultados.size=${data.size}")
         videoLista = data.toMutableList()
         videoListLiveData.postValue(videoLista)
     }
@@ -53,6 +53,8 @@ class SearchViewModel(val appRepository: AppRepository) : ViewModel(){
                         0,
                         0,
                         it.duration,
+                        0,
+                        0,
                         0,
                         isInfoReady,
                         false,

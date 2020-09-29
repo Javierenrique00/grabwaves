@@ -10,6 +10,9 @@ import android.view.View
 import androidx.core.graphics.drawable.toBitmap
 import coil.Coil
 import coil.request.ImageRequest
+import com.mundocrativo.javier.solosonido.ui.historia.KIND_URL_PLAYLIST
+import com.mundocrativo.javier.solosonido.ui.historia.KIND_URL_UNDEFINED
+import com.mundocrativo.javier.solosonido.ui.historia.KIND_URL_VIDEO
 import java.util.*
 
 object Util {
@@ -98,14 +101,14 @@ object Util {
         val videoBase64 = Util.convStringToBase64(videoLetras)
         val quality = if(hQ) "hq" else "lq"
         val ruta = server + "/?link="+videoBase64+"&q=$quality"
-        Log.v("msg","Contactando streaming:$ruta")
+        //Log.v("msg","Contactando streaming:$ruta")
         return ruta
     }
 
     fun createUrlConnectionStringSearch(server:String,searchLetras:String,limit:Int):String {
         val videoBase64 = convStringToBase64(searchLetras)
         val ruta = server + "/search/?question="+videoBase64+"&limit=$limit"
-        Log.v("msg","Buscando:$ruta")
+        //Log.v("msg","Buscando:$ruta")
         return ruta
     }
 
@@ -114,6 +117,13 @@ object Util {
         val ruta = pref.server + "/info/?link=" +videoBase64
         return ruta
     }
+
+    fun transUrlToServePlaylist(url:String,pref: AppPreferences):String{
+        val videoBase64 = convStringToBase64(url)
+        val ruta = pref.server + "/pl/?link=" +videoBase64
+        return ruta
+    }
+
 
     fun createUrlFromVideoId(videoId:String):String{
         return "https://www.youtube.com/watch?v=$videoId"
@@ -156,6 +166,11 @@ object Util {
         if(salida3.startsWith(":")) salida4=salida3.trimStart(':') else return salida3
         if(salida4.startsWith("0")) salida5=salida4.trimStart('0') else return salida4
         return salida5
+    }
+
+    fun checkKindLink(url:String):Int{
+        if(url.contains("/playlist")) return KIND_URL_PLAYLIST
+        return KIND_URL_VIDEO  //-- por ahora no asignamos KIND_URL_UNDEFINED
     }
 
 

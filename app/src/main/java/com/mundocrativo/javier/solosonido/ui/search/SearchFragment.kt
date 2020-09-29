@@ -74,7 +74,7 @@ class SearchFragment : Fragment() {
 
         view.backBt.setOnClickListener {
             val lastIndex = viewModel.recVideoList.size -1
-            Log.v("msg","Back button last backIndex=$lastIndex")
+            //Log.v("msg","Back button last backIndex=$lastIndex")
             if(lastIndex>=0){
                 viewModel.videoLista = viewModel.recVideoList.removeAt(lastIndex).toMutableList()
                 viewModel.videoLista.forEach { it.esSelected=false }
@@ -245,8 +245,8 @@ class SearchFragment : Fragment() {
             .setTitle(getString(R.string.titlequeue))
             .setMessage(getString(R.string.messageQueue))
             .setPositiveButton(getString(R.string.queueAdd)) { p0, p1 -> viewModel.openVideoUrlLink(MediaHelper.QUEUE_ADD,originalUrl) }
-            .setNeutralButton(getString(R.string.queueNext)) { p0, p1 -> viewModel.openVideoUrlLink(MediaHelper.QUEUE_NEXT,originalUrl) }
             .setNegativeButton(getString(R.string.queueNew)) { p0, p1 -> viewModel.openVideoUrlLink(MediaHelper.QUEUE_NEW,originalUrl) }
+            .setNeutralButton(getString(R.string.queueNext)) { p0, p1 -> viewModel.openVideoUrlLink(MediaHelper.QUEUE_NEXT,originalUrl) }
         val dialog =builder.create()
         dialog.show()
     }
@@ -257,6 +257,7 @@ class SearchFragment : Fragment() {
             .setMessage(getString(R.string.messageQueue))
             .setPositiveButton(getString(R.string.queueAdd)) { p0, p1 -> viewModel.playSelectedVideo(MediaHelper.QUEUE_ADD) }
             .setNegativeButton(getString(R.string.queueNew)) { p0, p1 -> viewModel.playSelectedVideo(MediaHelper.QUEUE_NEW) }
+            .setNeutralButton(getString(R.string.queueNext)) { p0, p1 -> viewModel.playSelectedVideo(MediaHelper.QUEUE_NEXT) }
         val dialog =builder.create()
         dialog.show()
     }

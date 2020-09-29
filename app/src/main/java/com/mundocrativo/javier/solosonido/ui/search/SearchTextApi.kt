@@ -41,7 +41,7 @@ fun flowFromString(api: SearchTextApi): Flow<String> = callbackFlow {
             try {
                 sendBlocking(value)
             } catch (e: Exception){
-                Log.v("msg","--Error in flow: $e")
+                Log.e("msg","--Error in flow: $e")
             }
         }
 

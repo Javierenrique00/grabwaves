@@ -322,7 +322,9 @@ open class MusicService : MediaBrowserServiceCompat() {
 
                     }
                 }
-
+                MediaHelper.CMD_SEND_LIST ->{
+                    MediaHelper.cmdRecListToPlayer(extras!!,exoPlayer)
+                }
                 MediaHelper.CMD_SEND_DELETE_QUEUE_ITEM ->{
                     val index = MediaHelper.cmdRecDeleteQueueIndex(extras!!)
                     exoPlayer.removeMediaItem(index)
@@ -362,21 +364,21 @@ open class MusicService : MediaBrowserServiceCompat() {
             notification: Notification,
             ongoing: Boolean
         ) {
-            Log.v("msg","Notification event llegó for Foreground service-----$notificationId  $notification")
+            //Log.v("msg","Notification event llegó for Foreground service-----$notificationId  $notification")
 
             if (ongoing && !isForegroundService) {
                 ContextCompat.startForegroundService(
                     applicationContext,
                     Intent(applicationContext, this@MusicService.javaClass)
                 )
-                Log.v("msg","Activating foreground service")
+                //Log.v("msg","Activating foreground service")
                 startForeground(notificationId, notification)
                 isForegroundService = true
             }
         }
 
         override fun onNotificationCancelled(notificationId: Int, dismissedByUser: Boolean) {
-            Log.v("msg","Stop foreground service")
+            //Log.v("msg","Stop foreground service")
             stopForeground(true)
             isForegroundService = false
             stopSelf()

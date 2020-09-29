@@ -10,6 +10,7 @@
     <color name="ColorBackgroundIcon">@color/black07</color>
     <color name="ColorResaltado">@color/red05</color>
     <color name="ColorFondoResaltado">@color/black05</color>
-    <color name="ColorSelectfondo">@color/black03</color>
+    <color name="ColorSelectfondo">@color/azul10</color>
+    <color name="ColorDisable">@color/grey06</color>
 
 </resources>

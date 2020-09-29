@@ -72,7 +72,7 @@ class VideoPlayerDataAdapter(val context: Context, val event:MutableLiveData<Vid
             holder.layout.setBackgroundColor(context.getColor(backColor))
 
             //--- Cambia el fondo del que está tocando
-            if(item.esPlaying) backColor = R.color.ColorFondoResaltado
+            if(item.esPlaying) backColor = R.color.ColorSelectfondo
             holder.layout.setBackgroundColor(context.getColor(backColor))
 
 

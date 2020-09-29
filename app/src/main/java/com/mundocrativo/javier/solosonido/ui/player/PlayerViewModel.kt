@@ -36,6 +36,7 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
     val nowPlayingInfo : MutableLiveData<InfoObj> by lazy { MutableLiveData<InfoObj>() }
     var actualQueueIndex = 0 //-- el indice de la canción que se está tocando
     var initLoading = false
+    val playVideoListPair = appRepository.playVideoListPair
 
 
 
@@ -66,10 +67,10 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
     }
 
 
-    fun getUrlInfo(videoIn:VideoObj,ruta:String):VideoObj?{
+    fun getUrlInfo(position:Int,videoIn:VideoObj,ruta:String):Pair<Int,VideoObj>{
         val info = appRepository.getInfoFromUrl(ruta)
         info?.let {
-            return VideoObj(
+            return Pair(position,VideoObj(
                 videoIn.id,
                 videoIn.url,
                 it.title,
@@ -79,16 +80,18 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
                 it.height,
                 it.duration,
                 videoIn.timestamp,
+                0,
+                0,
                 true,
                 false,
                 false,
-                videoIn.itemPosition,
+                0,
                 null,
                 false,
                 ""
-            )
+            ))
         }
-        return null
+        return Pair(position,VideoObj(videoIn.id,videoIn.url,"---","---","",0,0,0,0,videoIn.kindMedia,0,true,true,false,0,null,false,""))
     }
 
     fun getInfoNowPlaying(ruta:String)=viewModelScope.launch(Dispatchers.IO) {
@@ -137,48 +140,24 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
         return salida
     }
 
-    fun LoadDefaultPlayListToPlayer(context: Context,pref: AppPreferences) = viewModelScope.launch(Dispatchers.IO){
+
+    fun LoadDefaultPlayListToPlayer(pref:AppPreferences)= viewModelScope.launch(Dispatchers.IO){
         initLoading = true
         val defaultQueue = appRepository.getDefaultQueue()
+        val newList = mutableListOf<VideoObj>()
         defaultQueue.forEach {
-            Log.v("msg","${it.itemId} orden=${it.order}")
-                val job = launchPlayer(
-                    MediaHelper.QUEUE_ADD,
-                    Util.createUrlConnectionStringPlay(pref.server ?: "", it.itemId, pref.hQ),
-                    Util.transUrlToServInfo(it.itemId, pref),
-                    it.itemId,
-                    context)
-            job.join()
+            val video = VideoObj()
+            video.url = it.itemId
+            newList.add(video)
         }
+        appRepository.openVideoListUrlLiveData.postValue(Pair(MediaHelper.QUEUE_NEW_NOSAVE,newList))
         withContext(Dispatchers.Main){
-            delay(1000)
+            delay(2000)
+            //Log.v("msg","Traying to play item in queue:${pref.lastSongIndexPlayed}  time:${pref.lastTimePlayed}")
             playItemOnQueue(pref.lastSongIndexPlayed,pref.lastTimePlayed*1000L)
-        }
-        initLoading = false
-
-    }
-
-
-
-    //--- Commando que adiciona directamente a la cola
-    fun launchPlayer(queueCmd:Int,mediaUrl: String,infoUrl:String,originalUrl:String,context: Context)= viewModelScope.launch(Dispatchers.IO){
-        //--- tiene que traer la metadata
-        val info = appRepository.getInfoFromUrl(infoUrl)
-        info?.let {
-            val audioMetadata = AudioMetadata(
-                originalUrl,
-                it.title,
-                it.channel,
-                mediaUrl,
-                it.thumbnailUrl,
-                null
-            )
-            withContext(Dispatchers.Main) {
-                MediaHelper.cmdSendSongWithMetadataToPlayer(queueCmd,audioMetadata, musicServiceConnection)
-            }
+            initLoading = false
         }
     }
-
 
     companion object{
         const val MUSIC_ROOT = "MUSICROOT"

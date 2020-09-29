@@ -60,6 +60,20 @@ object MediaHelper {
             .build()
     }
 
+    //---
+    private fun convFromAudiometadataToMediaItem(audio:AudioMetadata):MediaBrowserCompat.MediaItem? {
+        val desc = MediaDescriptionCompat.Builder()
+            .setMediaId(audio.mediaId)
+            .setMediaUri(Uri.parse(audio.url))
+            .setTitle(audio.title)
+            .setIconUri(Uri.parse(audio.thumbnailUrl))
+            .setDescription("Description??")
+            .build()
+
+        return MediaBrowserCompat.MediaItem(desc, MediaBrowserCompat.MediaItem.FLAG_PLAYABLE)
+    }
+
+
 //----- Esta es la conversion de MediaItem a VideoObj,
     fun convMediaItemToVideoObj(mediaItem:MediaSessionCompat.QueueItem,context:Context):VideoObj{
         return VideoObj(
@@ -68,6 +82,8 @@ object MediaHelper {
             mediaItem.description.title.toString(),
             "--- No tengo Channel ---",
             mediaItem.description.iconUri.toString(),
+            0,
+            0,
             0,
             0,
             0,
@@ -112,6 +128,45 @@ object MediaHelper {
         return queueCmd
     }
 
+//----- comando para enviar una lista pcompleta
+    fun cmdSendListToPlayer(queueCmd: Int,index:Int,metadataList:ArrayList<AudioMetadata>,msc:MusicServiceConnection){
+        val bundle = Bundle()
+        bundle.putInt(CMD_SEND_LIST_PARAM_COMMAND,queueCmd)
+        bundle.putInt(CMD_SEND_LIST_PARAM_INDEX,index)
+        bundle.putParcelableArrayList (CMD_SEND_LIST_PARAM_DATA,metadataList)
+        msc.sendCommand(CMD_SEND_LIST,bundle)
+    }
+
+    fun cmdRecListToPlayer(bundle: Bundle,exoPlayer: ExoPlayer){
+        val queueCmd = bundle.getInt(CMD_SEND_LIST_PARAM_COMMAND)
+        val index = bundle.getInt(CMD_SEND_LIST_PARAM_INDEX)
+        val metadataList = bundle.getParcelableArrayList<AudioMetadata>(CMD_SEND_LIST_PARAM_DATA)
+
+        val items = mutableListOf<MediaItem>()
+        metadataList!!.forEach { items.add(convMediaItemToExoplayer( convFromAudiometadataToMediaItem(it)!!)) }
+
+        var changeCmd = queueCmd
+        if(exoPlayer.mediaItemCount==0) changeCmd = QUEUE_NEW
+        when(changeCmd){
+            QUEUE_NEW ->{
+                exoPlayer.playWhenReady = true
+                exoPlayer.stop(true)
+                exoPlayer.addMediaItems(items)
+                exoPlayer.prepare()
+                exoPlayer.seekTo(0,0)
+            }
+            QUEUE_ADD ->{
+                exoPlayer.addMediaItems(items)
+            }
+            QUEUE_NEXT ->{
+                val nextIndex = exoPlayer.currentWindowIndex + 1
+                //Log.v("msg","nextindex:$nextIndex")
+                exoPlayer.addMediaItems(nextIndex,items)
+            }
+        }
+    }
+
+
 //----- comando para borrar un Item de la cola en un indice determinado
 
     fun cmdSendDeleteQueueIndex(indice:Int,msc:MusicServiceConnection){
@@ -124,7 +179,7 @@ object MediaHelper {
         return bundle.getInt(CMD_SEND_DELETE_QUEUE_ITEM_PARAM)
     }
 
-//--- comando para mover un item d ela cola desde un origen a un destino
+//--- comando para mover un item de la cola desde un origen a un destino
 
     fun cmdSendMoveQueueItem(from:Int,to:Int,msc:MusicServiceConnection){
         val bundle = Bundle()
@@ -181,10 +236,6 @@ object MediaHelper {
     }
 
 
-
-
-
-
 //----------------------------------------
 
 
@@ -217,6 +268,13 @@ object MediaHelper {
     const val QUEUE_NEXT = 1
     const val QUEUE_NEW = 2
     const val QUEUE_NO_PLAY = 3
+    const val QUEUE_NEW_NOSAVE = 4
+
+    //--- commando para enviar toda una lista
+    const val CMD_SEND_LIST = "cmd_send_list"
+    const val CMD_SEND_LIST_PARAM_INDEX = "cmd_send_list_param_index"
+    const val CMD_SEND_LIST_PARAM_COMMAND = "cmd_send_list_param_command"
+    const val CMD_SEND_LIST_PARAM_DATA = "cmd_send_list_param_data"
 
 
     //-- comando para borrar de la cola un item
