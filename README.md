@@ -3,10 +3,10 @@ Android complement for audioextractor server
 
 Grabwaves is an Android client that works with [Audioextractor server](https://github.com/Javierenrique00/audioextractor), that you can use to browse for youtube music, and listen youtube playlist. Works very fast and without adds. It is open source and uses open sources libraries like exoplayer to listen to music. You can check the code and make changes as you want. Is very usefull to only listen music and youtube like a podcast, because you can block your cell phone and it plays in background to the queue list.
 
-[![Grabwaves Video](.doc/videoimg1.jpg)](https://youtu.be/-KJ8XO7vNl0)
+[![Grabwaves Video](./doc/videoimg2.jpg)](https://youtu.be/-KJ8XO7vNl0)
 
 
-First you need to have access to aserver of Audio extractor, put the IP in the following form: http://XXX.XXX.XXX.XXX:PPPP  where XXX...XXX is the Ip of the server. and PPPP is the port. Audioextractor use for default 2000 port, but you can change it.
+First you need to have access to server of Audioextractor, put the IP in the following form: http://XXX.XXX.XXX.XXX:PPPP  where XXX...XXX is the Ip of the server. and PPPP is the port. Audioextractor use for default 2000 port, but you can change it.
 
 With the option of the min quality, it downloads the music pretty fast without using to many mobile data. With Max quality it uses more mobile data and the music quality is the max available.
 
