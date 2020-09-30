@@ -13,6 +13,8 @@
 
     <string name="msgPlayListError">Error en playlist</string>
 
+    <string name="msgConfigServer">Por favor configure un servidor primero</string>
+
     //--- Video item recyclerview
 
     //--- Menu

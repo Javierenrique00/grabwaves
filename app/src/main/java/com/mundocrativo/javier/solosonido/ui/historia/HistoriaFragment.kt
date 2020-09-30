@@ -11,6 +11,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
@@ -89,8 +90,16 @@ class HistoriaFragment : Fragment() {
         //--- videoRecyclerView
         setupVideoListRecyclerAdapter()
         viewModel.videoListLiveData.observe(viewLifecycleOwner, Observer {
-            videoListDataAdapter.submitList(it)
-            videoListDataAdapter.notifyDataSetChanged()
+            lifecycleScope.launch {
+                val isServerWorking = viewModel.checkForServer(pref)
+                if(isServerWorking){
+                    videoListDataAdapter.submitList(it)
+                    videoListDataAdapter.notifyDataSetChanged()
+                }else{
+                    sendToast(getString(R.string.msgConfigServer))
+                }
+
+            }
         })
 
         //---cuando se quita un item de la lista
@@ -102,7 +111,8 @@ class HistoriaFragment : Fragment() {
 
         viewModel.openVideoUrlLiveData.observe(viewLifecycleOwner, Observer {
             //Log.v("msg","OPEN video ${it.second}")
-            if(!((viewModel.lastOpenUrl.first==it.first) and (viewModel.lastOpenUrl.second.contentEquals(it.second)))){
+            if(viewModel.loadLinkfromExternalapp){
+                viewModel.loadLinkfromExternalapp = false
                 insertItemAtTopList(it)
                 if(it.first!=MediaHelper.QUEUE_NO_PLAY){
                     val videoToPlay = VideoObj()
@@ -110,6 +120,8 @@ class HistoriaFragment : Fragment() {
                     val list = mutableListOf(videoToPlay)
                     //Log.v("msg","Trying to play url: size =${list.size} url=${list[0].url}")
                     viewModel.launchPlayerMultiple(it.first, list,pref,context!!)
+                }else{
+                    videoRv.smoothScrollToPosition(0)
                 }
             }
         })
@@ -130,7 +142,12 @@ class HistoriaFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        //----Inicia el flow
+
+        //--- para checkear de nuevo los servidores
+        if(!viewModel.isServerChecked){
+            viewModel.loadVideosFromDb()
+        }
+
         showButtons()
     }
 
@@ -266,7 +283,6 @@ class HistoriaFragment : Fragment() {
                 video.id = id
                 video.itemPosition = 0
                 //Log.v("msg","insertando item: $video")
-                viewModel.lastOpenUrl = pair
                 if(viewModel.isVideolistInitialized()){
                     viewModel.videoLista.add(0, video)
                 }else{
@@ -353,6 +369,12 @@ class HistoriaFragment : Fragment() {
             if(!videoObj.url.contentEquals(list2[index].url)) return false
         }
         return true
+    }
+
+    fun sendToast(mensaje:String){
+        val toast = Toast.makeText(context,mensaje,Toast.LENGTH_LONG)
+        toast.setGravity(Gravity.CENTER,0,0)
+        toast.show()
     }
 
 }

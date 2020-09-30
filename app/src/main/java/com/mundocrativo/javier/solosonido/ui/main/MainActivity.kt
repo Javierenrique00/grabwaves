@@ -4,9 +4,12 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import androidx.lifecycle.lifecycleScope
 import com.mundocrativo.javier.solosonido.R
 import com.mundocrativo.javier.solosonido.library.MediaHelper
 import com.mundocrativo.javier.solosonido.ui.historia.HistoriaFragment
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : AppCompatActivity() {
@@ -38,7 +41,12 @@ class MainActivity : AppCompatActivity() {
         val enlace = extras?.getString(Intent.EXTRA_TEXT)
         enlace?.let {
             //Log.v("msg","Enlace = $it")
-            viewModel.openVideoUrlLiveData.postValue(Pair(MediaHelper.QUEUE_NO_PLAY,it))
+            lifecycleScope.launch {
+                delay(2000)
+                viewModel.loadLinkfromExternalapp = true
+                viewModel.openVideoUrlLiveData.postValue(Pair(MediaHelper.QUEUE_NO_PLAY,it))
+            }
+
         }
     }
 

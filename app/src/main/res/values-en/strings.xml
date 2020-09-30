@@ -24,4 +24,6 @@
     <string name="generic_error">The application has encountered an unexpected error.</string>
     <string name="notification_channel">Now Playing</string>
     <string name="messageQueue">What to do with the music queue</string>
+    <string name="msgConfigServer">Please set up a server first</string>
+    <string name="msgPlayListError">Playlist error</string>
 </resources>

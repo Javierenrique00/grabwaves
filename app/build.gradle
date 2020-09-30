@@ -11,8 +11,8 @@ android {
         applicationId "com.mundocrativo.javier.solosonido"
         minSdkVersion 24
         targetSdkVersion 29
-        versionCode 27
-        versionName "2.7"
+        versionCode 28
+        versionName "2.8"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

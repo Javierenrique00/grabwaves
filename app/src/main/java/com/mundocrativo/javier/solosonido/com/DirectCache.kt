@@ -1,5 +1,6 @@
 package com.mundocrativo.javier.solosonido.com
 
+import android.util.Log
 import com.mundocrativo.javier.solosonido.model.CacheStr
 import com.mundocrativo.javier.solosonido.util.OkGetFileUrl
 import com.mundocrativo.javier.solosonido.util.Util
@@ -44,6 +45,10 @@ class DirectCache(val cacheStrDao: CacheStrDao) {
     fun sacaDelCache(urlInfo:String){
         var hashUrl = Util.genHashFromString(urlInfo)
         cacheStrDao.deleteCacheId(hashUrl)
+    }
+
+    fun conexionServer(url:String):String?{
+        return OkGetFileUrl.traeWebString(url)
     }
 
 }

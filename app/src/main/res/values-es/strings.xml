@@ -24,4 +24,6 @@
     <string name="notification_channel_description">Muestra que se está reproduciendo en UAMP</string>
     <string name="error_media_not_found">No se encuentra el medio de reproducción</string>
     <string name="generic_error">La aplicación encontró un error inesperado.</string>
+    <string name="msgPlayListError">Error en playlist</string>
+    <string name="msgConfigServer">Por favor configure un servidor primero</string>
 </resources>

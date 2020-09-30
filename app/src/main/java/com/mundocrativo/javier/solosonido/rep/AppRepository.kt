@@ -10,6 +10,8 @@ import com.mundocrativo.javier.solosonido.model.*
 import com.mundocrativo.javier.solosonido.service.MusicServiceConnection
 import com.mundocrativo.javier.solosonido.ui.historia.KIND_URL_PLAYLIST
 import com.mundocrativo.javier.solosonido.ui.historia.KIND_URL_VIDEO
+import com.mundocrativo.javier.solosonido.util.AppPreferences
+import com.mundocrativo.javier.solosonido.util.Util
 import com.squareup.moshi.Moshi
 import java.lang.Exception
 
@@ -23,6 +25,15 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
     val openVideoListUrlLiveData : MutableLiveData<Pair<Int,List<VideoObj>>> by lazy { MutableLiveData<Pair<Int,List<VideoObj>>>() }
     var defaultPlayListId : Long? = null
     val playVideoListPair : MutableLiveData<Pair<Int,List<VideoObj>>> by lazy { MutableLiveData<Pair<Int,List<VideoObj>>>() } //--- para enviar el listado al player
+
+    fun checkServOk(pref:AppPreferences):Boolean{
+        if(pref.server!!.isNotEmpty()){
+            val url = Util.createUrlConnectionStringSearch(pref.server!!,"sia",1)
+            val resultado = directCache.conexionServer(url)
+            return (resultado!=null)
+        }
+        return false
+    }
 
 
     fun listVideos():List<VideoObj>{

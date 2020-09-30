@@ -29,7 +29,6 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
     val musicServiceConnection = appRepository.musicServiceConnection
     val openVideoUrlLiveData = appRepository.openVideoUrlLiveData
     val openVideoListUrlLiveData = appRepository.openVideoListUrlLiveData
-    var lastOpenUrl : Pair<Int,String> = Pair(0,"")
     var lastListOpenUrl : List<VideoObj> = mutableListOf()
     val videoListLiveData : MutableLiveData<List<VideoObj>> by lazy { MutableLiveData<List<VideoObj>>() }
     lateinit var videoLista : MutableList<VideoObj>
@@ -37,6 +36,17 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
     val notifyItemRemoved : MutableLiveData<Int> by lazy { MutableLiveData<Int>() }
     val listToRemove = mutableListOf<VideoObj>()
     val playVideoListPair = appRepository.playVideoListPair //---para enviar la lista al player
+    var loadLinkfromExternalapp = false
+    var isServerChecked = false
+
+    suspend fun checkForServer(pref: AppPreferences):Boolean = withContext(Dispatchers.IO){
+        if(!isServerChecked){
+            isServerChecked = appRepository.checkServOk(pref)
+        }
+        isServerChecked
+    }
+
+
 
     suspend fun insertNewVideo(videoObj:VideoObj):Long = coroutineScope {
         appRepository.insertVideo(videoObj)
