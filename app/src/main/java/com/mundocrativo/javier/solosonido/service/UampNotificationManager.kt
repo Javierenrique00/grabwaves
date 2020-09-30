@@ -23,9 +23,11 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
+import android.util.Log
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.ui.PlayerNotificationManager
 import com.mundocrativo.javier.solosonido.R
+import com.mundocrativo.javier.solosonido.util.Util
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -66,7 +68,7 @@ class UampNotificationManager(
         ).apply {
 
             setMediaSessionToken(sessionToken)
-            setSmallIcon(R.drawable.ic_notification)
+            setSmallIcon(R.drawable.ic_hand_small)
 
             // Don't display the rewind or fast-forward buttons.
             setRewindIncrementMs(0)
@@ -127,7 +129,8 @@ class UampNotificationManager(
 //                    .load(uri)
 //                    .submit(NOTIFICATION_LARGE_ICON_SIZE, NOTIFICATION_LARGE_ICON_SIZE)
 //                    .get()
-                null //--- todo se puso null como el arte para no usar glide para traer las imagenes
+                //null //--- todo se puso null como el arte para no usar glide para traer las imagenes
+                Util.getBitmap(uri.toString(),context) //---se trae el icono con coil
             }
         }
     }

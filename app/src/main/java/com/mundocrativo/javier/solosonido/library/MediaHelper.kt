@@ -66,8 +66,8 @@ object MediaHelper {
             .setMediaId(audio.mediaId)
             .setMediaUri(Uri.parse(audio.url))
             .setTitle(audio.title)
+            .setSubtitle(audio.artist)
             .setIconUri(Uri.parse(audio.thumbnailUrl))
-            .setDescription("Description??")
             .build()
 
         return MediaBrowserCompat.MediaItem(desc, MediaBrowserCompat.MediaItem.FLAG_PLAYABLE)
