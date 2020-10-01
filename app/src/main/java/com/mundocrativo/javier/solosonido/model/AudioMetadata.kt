@@ -2,6 +2,7 @@ package com.mundocrativo.javier.solosonido.model
 
 import android.graphics.Bitmap
 import android.os.Parcelable
+import com.squareup.moshi.JsonClass
 import kotlinx.android.parcel.Parcelize
 
 @Parcelize
@@ -9,13 +10,16 @@ data class ListaAudioMetadata(
     val list:List<AudioMetadata>
 ) : Parcelable
 
-
 @Parcelize
+@JsonClass(generateAdapter = true)
 data class AudioMetadata(
-    val mediaId : String,
+    var mediaId : String,
     val title : String,
     val artist : String,
-    val url : String,
+    var url : String,
     val thumbnailUrl : String,
-    val thumbnailImg : Bitmap?
+    val duration: Int
 ) : Parcelable
+{
+    constructor() : this("","","","","",0)
+}

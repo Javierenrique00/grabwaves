@@ -155,37 +155,37 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
         //--Ahora envía la lista al exoplayer
         //val audioList = mutableListOf<AudioMetadata>()
         val audioList = ArrayList<AudioMetadata>()
-        finalVideoList.forEach { audioList.add(
-            AudioMetadata(
-            it.url,
-            it.title,
-            it.channel,
-            Util.createUrlConnectionStringPlay(pref.server!!,it.url,pref.hQ),
-            it.thumbnailUrl,
-            Util.getBitmap(it.thumbnailUrl,context)
-        )) }
+        finalVideoList.forEach {
+            var esVacio = true
+            if(it.title.isEmpty()){
+                //-- si no hay datos los intenta traer del cache
+                val metaCache = appRepository.getMetadataCache(it.url)
+                //Log.v("msg","No tengo datos, url=${it.url} cache=$metaCache")
+                if(metaCache!=null) {
+                    audioList.add(metaCache)
+                    esVacio = false
+                }
+            }
+            if(esVacio) {
+                audioList.add(
+                    AudioMetadata(
+                        it.url,
+                        it.title,
+                        it.channel,
+                        Util.createUrlConnectionStringPlay(pref.server, it.url, pref.hQ),
+                        it.thumbnailUrl,
+                        it.duration
+                    )
+                )
+            }
+        }
+        //---Tenemos el audio list con toda la metadata
+        appRepository.putMetadataListCache(audioList)
+
         withContext(Dispatchers.Main){
             MediaHelper.cmdSendListToPlayer(queueCmd,0,audioList,musicServiceConnection)
         }
 
-
-        //--- vamos a hacer el comentario del envío al player
-//        finalVideoList.forEach { video->
-//            val info = appRepository.getInfoFromUrl(Util.transUrlToServInfo(video.url,pref))
-//            info?.let { info ->
-//                val audioMetadata = AudioMetadata(
-//                    video.url,
-//                    video.title,
-//                    video.channel,
-//                    Util.createUrlConnectionStringPlay(pref.server!!,video.url,pref.hQ),
-//                    video.thumbnailUrl,
-//                    Util.getBitmap(video.thumbnailUrl,context))
-//                withContext(Dispatchers.Main){
-//                    MediaHelper.cmdSendSongWithMetadataToPlayer(queueCmdUpdate,audioMetadata,musicServiceConnection)
-//                    queueCmdUpdate = MediaHelper.QUEUE_ADD
-//                }
-//            }
-//        }
     }
 
 

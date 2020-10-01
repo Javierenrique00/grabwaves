@@ -429,6 +429,10 @@ open class MusicService : MediaBrowserServiceCompat() {
                 ExoPlaybackException.TYPE_SOURCE -> {
                     message = R.string.error_media_not_found;
                     Log.e(TAG, "TYPE_SOURCE: " + error.sourceException.message)
+                    val itemIndex = exoPlayer.currentWindowIndex
+                    exoPlayer.removeMediaItem(itemIndex)
+                    exoPlayer.prepare()
+                    exoPlayer.play()
                 }
                 // If the error occurs in a render component, Exoplayer raises a type_remote error.
                 ExoPlaybackException.TYPE_RENDERER -> {

@@ -135,15 +135,17 @@ class PlayerFragment : Fragment() {
             }
         })
 
-        //--- esta es la cola del player
+        //--- esta es la cola del player para compararla con la local y hacer correcciones en la local si se ha saltado algún item por error de media
         viewModel.queueLiveData.observe(viewLifecycleOwner, androidx.lifecycle.Observer { queueList ->
             //--- hay que hacer la conversion a VideoObj
+            val tempList = mutableListOf<VideoObj>()
+            queueList.forEach {queueItem ->
+                val item = MediaHelper.convMediaItemToVideoObj(queueItem,context!!)
+                tempList.add(item)
+            }
+            findDifferences(tempList,viewModel.videoLista)
 
-//            val tempList = mutableListOf<VideoObj>()
-//            queueList.forEach {queueItem ->
-//                val item = MediaHelper.convMediaItemToVideoObj(queueItem,context!!)
-//                tempList.add(item)
-//            }
+
 //            val iguales = checkTwoVideoListEqual(tempList,viewModel.videoLista)
 //            if(!iguales){
 //                viewModel.videoLista.clear()
@@ -213,6 +215,7 @@ class PlayerFragment : Fragment() {
                 MediaHelper.QUEUE_NEW ->{
                     viewModel.videoLista.clear()
                     viewModel.videoLista.addAll(it.second)
+                    viewModel.actualQueueIndex = 0
                 }
                 MediaHelper.QUEUE_ADD ->{
                     viewModel.videoLista.addAll(it.second)
@@ -401,7 +404,7 @@ class PlayerFragment : Fragment() {
                 }
                 is VideoPlayerListEvent.OnSwipeRight ->{
                     //---evento para borrar el item de la cola
-                    viewModel.deleteQueueItem(it.position)
+                    viewModel.deleteQueueItem(it.position,true)
                 }
                 is VideoPlayerListEvent.OnMoveItem ->{
                     //Log.v("msg","move from:${it.from} to${it.to}")
@@ -454,6 +457,7 @@ class PlayerFragment : Fragment() {
 
     fun updateVideoListaEsPlaying(activeQueueItem:Int){
         if((viewModel.actualQueueIndex<viewModel.videoLista.size) and (viewModel.actualQueueIndex>-1)){
+            if(activeQueueItem!=viewModel.actualQueueIndex) queueRv.smoothScrollToPosition(activeQueueItem) //-- es para salte a ver el item actual cada vez que hay cambio de canción
             checkListItemPlayingForClear()
             viewModel.actualQueueIndex = activeQueueItem
             val cambiado = viewModel.videoLista[viewModel.actualQueueIndex]
@@ -480,6 +484,55 @@ class PlayerFragment : Fragment() {
             if(!videoObj.url.contentEquals(list2[index].url)) return false
         }
         return true
+    }
+
+    //---list1 es la lista pequena del player
+    //---list2 es la lista completa y es la base que hay que ver las diferencias
+    fun findDifferences(list1:List<VideoObj>,list2:List<VideoObj>){
+        if(list2.size>0){
+            val consecList = mutableListOf<Int>()
+            var index = 0
+            val tama1 = list1.size
+            var init1 = 0
+            var cant = 0
+            Log.v("msg","index tamanos list1=${list1.size} list2=${list2.size}")
+            do {
+                for (x in init1 until tama1) {
+                    index = list2.indexOfFirst { it.url.contentEquals(list1[x].url) }
+                    if (index >= 0) {
+                        init1 = x + 1
+                        break
+                    }
+                }
+                cant++
+                //Log.v("msg", "index cant:$cant  x=$init1 equal =$index")
+                consecList.add(index)
+            }while (cant<tama1)
+
+            //--- detecta el que hay que borrar
+            val itemsToDelete = mutableListOf<Int>()
+            if(consecList.size>0){
+                var ant = consecList[0]
+                consecList.forEach {
+                    val delta = it - ant
+                    if(delta>1) {
+                        //--- para borrar el it
+                        Log.v("msg","index to ---------> to delete ${ant+1}")
+                        itemsToDelete.add(ant+1)
+                    }
+                    ant = it
+                }
+            }
+
+            //--- borra si solo hay un item que borrar
+            if(itemsToDelete.size==1){
+                viewModel.deleteQueueItem(itemsToDelete[0],false)
+            }else{
+                if(itemsToDelete.size>1) Log.e("msg","Se detectaron muchos items para borrar - no se borra ninguno")
+            }
+
+        }
+
     }
 
 

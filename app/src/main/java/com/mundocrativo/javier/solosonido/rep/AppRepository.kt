@@ -3,6 +3,7 @@ package com.mundocrativo.javier.solosonido.rep
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import com.mundocrativo.javier.solosonido.com.DirectCache
+import com.mundocrativo.javier.solosonido.com.MetadataCache
 import com.mundocrativo.javier.solosonido.db.QueueDao
 import com.mundocrativo.javier.solosonido.db.QueueFieldDao
 import com.mundocrativo.javier.solosonido.db.VideoDao
@@ -16,7 +17,7 @@ import com.squareup.moshi.Moshi
 import java.lang.Exception
 
 
-class AppRepository(private val videoDao: VideoDao,private val directCache: DirectCache,val musicServiceConnection: MusicServiceConnection,private val queueDao: QueueDao,private val queueFieldDao: QueueFieldDao) {
+class AppRepository(private val videoDao: VideoDao,private val directCache: DirectCache,val musicServiceConnection: MusicServiceConnection,private val queueDao: QueueDao,private val queueFieldDao: QueueFieldDao,private val metadataCache: MetadataCache) {
     val moshi = Moshi.Builder().build()
     val infoAdapter = moshi.adapter(InfoObj::class.java)
     val searchAdapter = moshi.adapter(SearchObj::class.java)
@@ -27,10 +28,10 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
     val playVideoListPair : MutableLiveData<Pair<Int,List<VideoObj>>> by lazy { MutableLiveData<Pair<Int,List<VideoObj>>>() } //--- para enviar el listado al player
 
     fun checkServOk(pref:AppPreferences):Boolean{
-        if(pref.server!!.isNotEmpty()){
-            val url = Util.createUrlConnectionStringSearch(pref.server!!,"sia",1)
-            val resultado = directCache.conexionServer(url)
-            return (resultado!=null)
+        if(pref.server.isNotEmpty()){
+            val resultado = directCache.conexionServer(Util.createCheckLink(pref)) ?: return false
+            if(resultado.contentEquals("ok")) return true
+            return false
         }
         return false
     }
@@ -222,6 +223,15 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
     fun getDefaultQueue():List<QueueField>{
         return queueFieldDao.traeQueueItems(getDefaulQueueIndex())
     }
+
+    fun getMetadataCache(key:String):AudioMetadata?{
+        return metadataCache.traeMetadata(key)
+    }
+
+    fun putMetadataListCache(dataList:List<AudioMetadata>){
+        dataList.forEach { metadataCache.poneMetadata(it) }
+    }
+
 }
 
 const val DEFAULT_QUEUE_NAME = "default"

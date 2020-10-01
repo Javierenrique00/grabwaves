@@ -3,12 +3,17 @@ package com.mundocrativo.javier.solosonido
 import android.app.Application
 import android.content.ComponentName
 import androidx.room.Room
+import com.mundocrativo.javier.solosonido.base.GeneralCache
+import com.mundocrativo.javier.solosonido.com.CacheMetaDao
 import com.mundocrativo.javier.solosonido.com.CacheStrDao
 import com.mundocrativo.javier.solosonido.com.DirectCache
+import com.mundocrativo.javier.solosonido.com.MetadataCache
 import com.mundocrativo.javier.solosonido.db.DataDatabase
 import com.mundocrativo.javier.solosonido.db.QueueDao
 import com.mundocrativo.javier.solosonido.db.QueueFieldDao
 import com.mundocrativo.javier.solosonido.db.VideoDao
+import com.mundocrativo.javier.solosonido.model.CacheMetaStr
+import com.mundocrativo.javier.solosonido.model.CacheStr
 import com.mundocrativo.javier.solosonido.rep.AppRepository
 import com.mundocrativo.javier.solosonido.service.MusicService
 import com.mundocrativo.javier.solosonido.service.MusicServiceConnection
@@ -44,6 +49,10 @@ val appModule = module {
         return database.queueFieldDao
     }
 
+    fun provideCacheMetaDao(database: DataDatabase):CacheMetaDao {
+        return database.cacheMetaDao
+    }
+
     //--- instancia de la base de datos
     single { provideDatabase(androidApplication()) }
 
@@ -59,11 +68,35 @@ val appModule = module {
     //--- instancia QueueFieldDao
     single { provideQueueFieldDao(get()) }
 
+    //--- instancia CacheMetaDao
+    single { provideCacheMetaDao(get()) }
+
+
     fun provideDirectCache(cacheStrDao: CacheStrDao):DirectCache{
         return DirectCache(cacheStrDao)
     }
 
     single { provideDirectCache(get()) }
+
+
+    fun provideInterfaceCacheMetaDao(dao: CacheMetaDao):GeneralCache.DaoInterface{
+        return object : GeneralCache.DaoInterface{
+            override fun getData(key: Long): CacheMetaStr? {
+                return dao.traeCache(key)
+            }
+
+            override fun putData(cache: CacheMetaStr) {
+                return dao.insert(cache)
+            }
+        }
+    }
+
+    single { provideInterfaceCacheMetaDao(get()) }
+
+    fun provideMetadataCache(dao:GeneralCache.DaoInterface):MetadataCache{
+        return MetadataCache(dao)
+    }
+    single { provideMetadataCache(get()) }
 
     //--- necesita el nombre del servicio del MediaBrowser, el cual se pone como parámetro
     fun provideMusicServiceConnection(application: Application):MusicServiceConnection{
@@ -74,11 +107,11 @@ val appModule = module {
     single { provideMusicServiceConnection(get()) }
 
 
-    fun provideAppRepository(videoDao: VideoDao,directCache: DirectCache,musicServiceConnection: MusicServiceConnection,queueDao: QueueDao,queueFieldDao: QueueFieldDao):AppRepository {
-        return AppRepository(videoDao,directCache,musicServiceConnection,queueDao,queueFieldDao)
+    fun provideAppRepository(videoDao: VideoDao,directCache: DirectCache,musicServiceConnection: MusicServiceConnection,queueDao: QueueDao,queueFieldDao: QueueFieldDao,metaCache:MetadataCache):AppRepository {
+        return AppRepository(videoDao,directCache,musicServiceConnection,queueDao,queueFieldDao,metaCache)
     }
 
-    single { provideAppRepository(get(),get(),get(),get(),get()) }
+    single { provideAppRepository(get(),get(),get(),get(),get(),get()) }
 
 }
 

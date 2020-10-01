@@ -123,7 +123,7 @@ object MediaHelper {
         val audioMetadata = bundle.getParcelable<AudioMetadata>(CMD_SEND_SONG_METADATA_PARAM)
         val queueCmd = bundle.getInt(CMD_SEND_SONG_QUEUECMD_PARAM)
         audioMetadata?.let {
-            addMediaItemAndMetadata(it.mediaId,it.url,it.title,it.artist,it.thumbnailUrl,it.thumbnailImg)
+            addMediaItemAndMetadata(it.mediaId,it.url,it.title,it.artist,it.thumbnailUrl,null)
         }
         return queueCmd
     }

@@ -68,6 +68,16 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
 
 
     fun getUrlInfo(position:Int,videoIn:VideoObj,ruta:String):Pair<Int,VideoObj>{
+        val metaData = appRepository.getMetadataCache(videoIn.url) //--es posible encontrar en el cache esta metadata pero sin bitmap
+        metaData?.let {
+            return Pair(position,VideoObj(
+                videoIn.id,
+                videoIn.url,
+                it.title,
+                it.artist,
+                it.thumbnailUrl,
+                0,0,it.duration,videoIn.timestamp,9,9,true,false,false,0,null,false,"ºº"))
+        }
         val info = appRepository.getInfoFromUrl(ruta)
         info?.let {
             return Pair(position,VideoObj(
@@ -105,7 +115,7 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
     }
 
 
-    fun deleteQueueItem(index:Int){
+    fun deleteQueueItem(index:Int,toPlayer:Boolean){
         if(actualQueueIndex>=index) {
             actualQueueIndex -=1
             if(actualQueueIndex<0) actualQueueIndex = 0
@@ -113,10 +123,12 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
         
         videoLista.removeAt(index)
         notifyItemRemoved.postValue(index)
-        MediaHelper.cmdSendDeleteQueueIndex(index,musicServiceConnection)
+        updateCurrentPlayList()
+        if(toPlayer) MediaHelper.cmdSendDeleteQueueIndex(index,musicServiceConnection)
     }
 
     fun moveQueueItem(from:Int,to:Int){
+        updateCurrentPlayList()
         MediaHelper.cmdSendMoveQueueItem(from,to,musicServiceConnection)
     }
 

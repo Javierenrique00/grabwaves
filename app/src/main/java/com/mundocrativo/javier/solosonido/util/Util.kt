@@ -124,6 +124,9 @@ object Util {
         return ruta
     }
 
+    fun createCheckLink(pref: AppPreferences):String{
+        return pref.server + "/check"
+    }
 
     fun createUrlFromVideoId(videoId:String):String{
         return "https://www.youtube.com/watch?v=$videoId"

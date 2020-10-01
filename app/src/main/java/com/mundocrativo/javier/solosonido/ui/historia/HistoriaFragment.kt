@@ -110,7 +110,7 @@ class HistoriaFragment : Fragment() {
         })
 
         viewModel.openVideoUrlLiveData.observe(viewLifecycleOwner, Observer {
-            //Log.v("msg","OPEN video ${it.second}")
+            Log.v("msg","OPEN video ${it.second}")
             if(viewModel.loadLinkfromExternalapp){
                 viewModel.loadLinkfromExternalapp = false
                 insertItemAtTopList(it)
@@ -121,6 +121,7 @@ class HistoriaFragment : Fragment() {
                     //Log.v("msg","Trying to play url: size =${list.size} url=${list[0].url}")
                     viewModel.launchPlayerMultiple(it.first, list,pref,context!!)
                 }else{
+                    Log.v("msg","Only smooth Scroll")
                     videoRv.smoothScrollToPosition(0)
                 }
             }
@@ -174,6 +175,7 @@ class HistoriaFragment : Fragment() {
         }
         if(!enlaceLetras.isEmpty()) {
             insertItemAtTopList(Pair(MediaHelper.QUEUE_NO_PLAY,enlaceLetras))
+            videoRv.smoothScrollToPosition(0)
         }
     }
 

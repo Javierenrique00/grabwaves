@@ -9,3 +9,10 @@ data class CacheStr(
     var cacheData:String?,
     var timestamp:Long
     )
+
+@Entity
+data class CacheMetaStr(
+    @PrimaryKey(autoGenerate = false) var id:Long,
+    var cacheData:String?,
+    var timestamp:Long
+)
