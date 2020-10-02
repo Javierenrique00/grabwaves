@@ -128,10 +128,13 @@ class PlayerFragment : Fragment() {
                 val mediaId = it.description.mediaId
                 val titulo = it.description.title
                 val metadataString = it.getString("METADATA_KEY_TITLE")
-                //Log.v("msg","queue Now playing in fragment:${mediaId} | titulo=$titulo  metadataString=$metadataString")
+                Log.v("msg","Now playing in fragment:${mediaId} | titulo=$titulo  metadataString=$metadataString")
                 viewModel.getInfoNowPlaying(Util.transUrlToServInfo(mediaId!!,pref))
                 viewModel.sendPlayDuration() //--- lanza el comando de la duracion
                 updateSeekBar()  //-- para que haya un ciclo cada segundo para actualizar el seekbar
+
+                checkActualQueueIndexWithPlayer(mediaId)
+
             }
         })
 
@@ -145,28 +148,6 @@ class PlayerFragment : Fragment() {
             }
             findDifferences(tempList,viewModel.videoLista)
 
-
-//            val iguales = checkTwoVideoListEqual(tempList,viewModel.videoLista)
-//            if(!iguales){
-//                viewModel.videoLista.clear()
-//                queueList.forEach {queueItem ->
-//                    viewModel.videoLista.add(MediaHelper.convMediaItemToVideoObj(queueItem,context!!))
-//                    Log.v("msg","Cargando Conversion MediaId=->${queueItem.description.mediaId} queueId = ${queueItem.queueId}")
-//                    videoPlayerDataAdapter.submitList(viewModel.videoLista)
-//                    videoPlayerDataAdapter.notifyDataSetChanged()
-//                }
-//            }else{
-//                //---debe chequear que tenga cargada la lista en el adapter
-//                val size = videoPlayerDataAdapter.currentList.size
-//                //Log.v("msg","Chequeando si tiene cargado el adapter cargado size=$size")
-//                if(size==0){
-//                    videoPlayerDataAdapter.submitList(viewModel.videoLista)
-//                    videoPlayerDataAdapter.notifyDataSetChanged()
-//                }
-//            }
-//            viewModel.updateCurrentPlayList()
-//
-//            Log.v("msg","Cargando la cola del player para mostrar Fragmento ${queueList.size}  iguales=$iguales")
         })
 
 //-- se quitó porque no se usa
@@ -456,6 +437,7 @@ class PlayerFragment : Fragment() {
     }
 
     fun updateVideoListaEsPlaying(activeQueueItem:Int){
+        Log.v("msg","index setting Videolista is Playing Index =$activeQueueItem")
         if((viewModel.actualQueueIndex<viewModel.videoLista.size) and (viewModel.actualQueueIndex>-1)){
             if(activeQueueItem!=viewModel.actualQueueIndex) queueRv.smoothScrollToPosition(activeQueueItem) //-- es para salte a ver el item actual cada vez que hay cambio de canción
             checkListItemPlayingForClear()
@@ -475,15 +457,6 @@ class PlayerFragment : Fragment() {
                 videoPlayerDataAdapter.notifyItemChanged(index)
             }
         }
-    }
-
-
-    fun checkTwoVideoListEqual(list1:List<VideoObj>,list2:List<VideoObj>):Boolean{
-        if(list1.size!=list2.size) return false
-        list1.forEachIndexed { index, videoObj ->
-            if(!videoObj.url.contentEquals(list2[index].url)) return false
-        }
-        return true
     }
 
     //---list1 es la lista pequena del player
@@ -533,6 +506,40 @@ class PlayerFragment : Fragment() {
 
         }
 
+    }
+
+    fun checkActualQueueIndexWithPlayer(mediaId:String){
+        if((viewModel.actualQueueIndex<viewModel.videoLista.size) and (viewModel.actualQueueIndex>-1)){
+            //---vamos a chequear el url del nowplaying es igual al del indice del nowPlaying
+            if(mediaId.contentEquals(viewModel.videoLista[viewModel.actualQueueIndex].url)){
+                Log.v("msg","Index sincronyzed")
+            }
+            else{
+                Log.e("msg","Index, ActualQueueIndex desynchronized Actualqueueindex:${viewModel.actualQueueIndex} videolista.size=${viewModel.videoLista.size}")
+                //--- buscando el indice a las malas, debe seleccionar el mas cercano de toda la lista
+                val indexList = mutableListOf<Int>()
+                viewModel.videoLista.forEachIndexed { index, videoObj ->
+                    if(videoObj.url.contentEquals(mediaId)){
+                        indexList.add(index)
+                    }
+                }
+                //--- lista de los indices que tienen ese mismo contenido
+                var indexMin = 0
+                var dif = Int.MAX_VALUE
+                indexList.forEach {
+                    val tempDif = Math.abs(it - viewModel.actualQueueIndex)
+                    if(tempDif<dif) {
+                        dif = tempDif
+                        indexMin = it
+                    }
+                }
+                Log.v("msg","Setting index el valor mas cercano es index=$indexMin not setting")
+                //viewModel.actualQueueIndex = indexMin
+                //updateVideoListaEsPlaying(indexMin)
+            }
+        }else{
+            Log.e("msg","index , Outofbounds Actualqueueindex:${viewModel.actualQueueIndex} videolista.size=${viewModel.videoLista.size}")
+        }
     }
 
 

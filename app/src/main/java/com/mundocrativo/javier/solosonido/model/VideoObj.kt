@@ -29,4 +29,6 @@ data class VideoObj(
 
 ){
     constructor() : this(0,"","","","",0,0,0,0L,0,0,false,false,false,0,null,false,"")
+
+    constructor(url:String) : this(0,url,"","","",0,0,0,0L,0,0,false,false,false,0,null,false,"")
 }

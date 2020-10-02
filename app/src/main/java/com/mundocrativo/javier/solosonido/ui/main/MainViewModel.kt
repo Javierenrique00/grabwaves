@@ -38,6 +38,9 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
     val playVideoListPair = appRepository.playVideoListPair //---para enviar la lista al player
     var loadLinkfromExternalapp = false
     var isServerChecked = false
+    //--- observer para lanzar a otro tabfragment
+    val pageChangePager : MutableLiveData<Int> by lazy { MutableLiveData<Int>() }
+
 
     suspend fun checkForServer(pref: AppPreferences):Boolean = withContext(Dispatchers.IO){
         if(!isServerChecked){
@@ -184,14 +187,14 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
 
         withContext(Dispatchers.Main){
             MediaHelper.cmdSendListToPlayer(queueCmd,0,audioList,musicServiceConnection)
+
+            //--- para que cambie al player
+            pageChangePager.postValue(2) //--salta al player una vez envía todas las canciones
         }
+
 
     }
 
-
-
     fun isVideolistInitialized() = this::videoLista.isInitialized
-
-
 
 }

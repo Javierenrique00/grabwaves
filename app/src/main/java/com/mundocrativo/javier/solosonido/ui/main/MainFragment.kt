@@ -5,12 +5,14 @@ import android.os.Bundle
 import android.view.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayoutMediator
 import com.mundocrativo.javier.solosonido.R
 import com.mundocrativo.javier.solosonido.ui.config.ConfigActivity
 import kotlinx.android.synthetic.main.main_fragment.*
 import kotlinx.android.synthetic.main.main_fragment.view.*
+import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 
 class MainFragment : Fragment() {
 
@@ -20,6 +22,7 @@ class MainFragment : Fragment() {
 
     private lateinit var myPagerAdapter: MyPagerAdapter
     private lateinit var viewPager: ViewPager2
+    private val viewModel by sharedViewModel<MainViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,7 +81,9 @@ class MainFragment : Fragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        //viewModel = ViewModelProviders.of(this).get(MainViewModel::class.java)
+        viewModel.pageChangePager.observe(viewLifecycleOwner, Observer {
+            viewPager.currentItem = it
+        })
 
     }
 

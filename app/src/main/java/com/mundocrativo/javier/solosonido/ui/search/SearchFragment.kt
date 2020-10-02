@@ -19,6 +19,7 @@ import coil.ImageLoader
 import coil.request.ImageRequest
 import com.mundocrativo.javier.solosonido.R
 import com.mundocrativo.javier.solosonido.library.MediaHelper
+import com.mundocrativo.javier.solosonido.model.VideoObj
 import com.mundocrativo.javier.solosonido.ui.historia.ItemChangeApi
 import com.mundocrativo.javier.solosonido.ui.historia.VideoInfoApi
 import com.mundocrativo.javier.solosonido.ui.historia.flowFromItem
@@ -212,7 +213,7 @@ class SearchFragment : Fragment() {
                         searchListAdapter.notifyItemChanged(it.position)
                     }
                     else{
-                        dialogItemCola(it.item.url)
+                        dialogItemCola(it.item)
                         val selecItem = it.item
                         selecItem.esSelected = true
                         itemChangeApi.genera(Pair(it.position,selecItem))
@@ -240,16 +241,17 @@ class SearchFragment : Fragment() {
 
     }
 
-    fun dialogItemCola(originalUrl:String){
+    fun dialogItemCola(item:VideoObj){
         val builder = AlertDialog.Builder(context!!)
             .setTitle(getString(R.string.titlequeue))
             .setMessage(getString(R.string.messageQueue))
-            .setPositiveButton(getString(R.string.queueAdd)) { p0, p1 -> viewModel.openVideoUrlLink(MediaHelper.QUEUE_ADD,originalUrl) }
-            .setNegativeButton(getString(R.string.queueNew)) { p0, p1 -> viewModel.openVideoUrlLink(MediaHelper.QUEUE_NEW,originalUrl) }
-            .setNeutralButton(getString(R.string.queueNext)) { p0, p1 -> viewModel.openVideoUrlLink(MediaHelper.QUEUE_NEXT,originalUrl) }
+            .setPositiveButton(getString(R.string.queueAdd)) { p0, p1 -> viewModel.openVideoItem(MediaHelper.QUEUE_ADD,item) }
+            .setNegativeButton(getString(R.string.queueNew)) { p0, p1 -> viewModel.openVideoItem(MediaHelper.QUEUE_NEW,item) }
+            .setNeutralButton(getString(R.string.queueNext)) { p0, p1 -> viewModel.openVideoItem(MediaHelper.QUEUE_NEXT,item) }
         val dialog =builder.create()
         dialog.show()
     }
+
 
     fun dialogPlaySelectedItems(){
         val builder = AlertDialog.Builder(context!!)

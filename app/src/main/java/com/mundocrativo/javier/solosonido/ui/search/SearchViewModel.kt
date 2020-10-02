@@ -26,8 +26,9 @@ class SearchViewModel(val appRepository: AppRepository) : ViewModel(){
         videoListLiveData.postValue(videoLista)
     }
 
-    fun openVideoUrlLink(queueCmd:Int,url:String){
-        appRepository.openVideoUrl(queueCmd, url)
+    fun openVideoItem(queueCmd:Int,item:VideoObj){
+        //appRepository.openVideoUrl(queueCmd, url)
+        appRepository.openVideoListUrl(queueCmd, mutableListOf(item))
     }
 
     fun playSelectedVideo(queueCmd: Int){
