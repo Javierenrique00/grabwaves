@@ -211,19 +211,19 @@ open class MusicService : MediaBrowserServiceCompat() {
             putInt(CONTENT_STYLE_BROWSABLE_HINT, CONTENT_STYLE_GRID)
             putInt(CONTENT_STYLE_PLAYABLE_HINT, CONTENT_STYLE_LIST)
         }
-
-
-        return BrowserRoot(UAMP_EMPTY_ROOT, rootExtras)
+        return BrowserRoot(MUSIC_ROOT, rootExtras)
     }
+
+
 
 
     override fun onLoadChildren(
         parentId: String,
         result: Result<MutableList<MediaBrowserCompat.MediaItem>>
     ) {
-        //Log.v(TAG,"--->ParentId=$parentId")
+        Log.v("msg","--->ParentId=$parentId")
 
-        result.sendResult(MediaHelper.populateItems())
+        result.sendResult(MediaHelper.videosMetadata)
     }
 
 
@@ -324,14 +324,20 @@ open class MusicService : MediaBrowserServiceCompat() {
                 }
                 MediaHelper.CMD_SEND_LIST ->{
                     MediaHelper.cmdRecListToPlayer(extras!!,exoPlayer)
+                    notifyChildrenChanged(MUSIC_ROOT)
                 }
                 MediaHelper.CMD_SEND_DELETE_QUEUE_ITEM ->{
                     val index = MediaHelper.cmdRecDeleteQueueIndex(extras!!)
+                    MediaHelper.videosMetadata.removeAt(index)
+                    notifyChildrenChanged(MUSIC_ROOT)
                     exoPlayer.removeMediaItem(index)
                 }
                 MediaHelper.CMD_SEND_MOVE_QUEUE ->{
                     val pair = MediaHelper.cmdRecMoveQueueItem(extras!!)
                     //Log.v("msg","Mover: from${pair.first} to:${pair.second}")
+                    val temp = MediaHelper.videosMetadata.removeAt(pair.first)
+                    MediaHelper.videosMetadata.add(pair.second,temp)
+                    notifyChildrenChanged(MUSIC_ROOT)
                     exoPlayer.moveMediaItem(pair.first,pair.second)
                 }
                 MediaHelper.CMD_PLAY_AT ->{
@@ -430,6 +436,10 @@ open class MusicService : MediaBrowserServiceCompat() {
                     message = R.string.error_media_not_found;
                     Log.e(TAG, "TYPE_SOURCE: " + error.sourceException.message)
                     val itemIndex = exoPlayer.currentWindowIndex
+
+                    MediaHelper.videosMetadata.removeAt(itemIndex)
+                    notifyChildrenChanged(MUSIC_ROOT)
+
                     exoPlayer.removeMediaItem(itemIndex)
                     exoPlayer.prepare()
                     exoPlayer.play()
@@ -465,7 +475,7 @@ open class MusicService : MediaBrowserServiceCompat() {
 
     companion object{
         const val TAG = "msg"
-        const val UAMP_EMPTY_ROOT = "@empty@"
+        const val MUSIC_ROOT = "MUSICROOT"
         const val MEDIA_SEARCH_SUPPORTED = "android.media.browse.SEARCH_SUPPORTED"
 
         private const val CONTENT_STYLE_BROWSABLE_HINT = "android.media.browse.CONTENT_STYLE_BROWSABLE_HINT"

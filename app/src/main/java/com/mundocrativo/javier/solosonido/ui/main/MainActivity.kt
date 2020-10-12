@@ -25,13 +25,13 @@ class MainActivity : AppCompatActivity() {
                     .replace(R.id.container, MainFragment.newInstance())
                     .commitNow()
         }
-        //Log.v("msg","From onCreate")
+        Log.v("msg","From onCreate----------------------------------------")
         getDataFromIntent()
     }
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        //Log.v("msg","From new Intent")
+        Log.v("msg","From new Intent---------------------------------")
         getDataFromIntent()
     }
 
@@ -48,6 +48,11 @@ class MainActivity : AppCompatActivity() {
             }
 
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Log.v("msg","Stop Activity---------------------------------")
     }
 
 

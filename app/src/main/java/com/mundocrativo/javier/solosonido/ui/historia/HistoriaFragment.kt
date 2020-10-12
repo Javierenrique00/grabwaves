@@ -110,20 +110,25 @@ class HistoriaFragment : Fragment() {
         })
 
         viewModel.openVideoUrlLiveData.observe(viewLifecycleOwner, Observer {
-            //Log.v("msg","OPEN video ${it.second}")
-            if(viewModel.loadLinkfromExternalapp){
-                viewModel.loadLinkfromExternalapp = false
-                insertItemAtTopList(it)
-                if(it.first!=MediaHelper.QUEUE_NO_PLAY){
-                    val videoToPlay = VideoObj()
-                    videoToPlay.url = it.second
-                    val list = mutableListOf(videoToPlay)
-                    //Log.v("msg","Trying to play url: size =${list.size} url=${list[0].url}")
-                    viewModel.launchPlayerMultiple(it.first, list,pref,context!!)
-                }else{
-                    //Log.v("msg","Only smooth Scroll")
-                    videoRv.smoothScrollToPosition(0)
+            if(!viewModel.lastUrlValue.contentEquals(it.second)){
+                viewModel.lastUrlValue = it.second
+                Log.v("msg","OPEN video ${it.second}")
+                if(viewModel.loadLinkfromExternalapp){
+                    viewModel.loadLinkfromExternalapp = false
+                    insertItemAtTopList(it)
+                    if(it.first!=MediaHelper.QUEUE_NO_PLAY){
+                        val videoToPlay = VideoObj()
+                        videoToPlay.url = it.second
+                        val list = mutableListOf(videoToPlay)
+                        Log.v("msg","Trying to play url: size =${list.size} url=${list[0].url}")
+                        viewModel.launchPlayerMultiple(it.first, list,pref,context!!)
+                    }else{
+                        //Log.v("msg","Only smooth Scroll")
+                        videoRv.smoothScrollToPosition(0)
+                    }
                 }
+            }else{
+                Log.v("msg","Last URL already opened ${it.second} not adding to the list")
             }
         })
 
@@ -283,13 +288,12 @@ class HistoriaFragment : Fragment() {
                 }
                 val id = viewModel.insertNewVideo(video)
                 video.id = id
-                video.itemPosition = 0
-                //Log.v("msg","insertando item: $video")
+                Log.v("msg","insertando item: $video")
                 if(viewModel.isVideolistInitialized()){
                     viewModel.videoLista.add(0, video)
                 }else{
                     viewModel.videoLista = mutableListOf(video)
-                    //viewModel.videoLista.add(0, video)
+                    viewModel.videoLista.add( video)
                 }
             }
             job.join()

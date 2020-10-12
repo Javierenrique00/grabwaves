@@ -9,7 +9,7 @@ import com.mundocrativo.javier.solosonido.model.VideoObj
 @Dao
 interface VideoDao {
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insert(item:VideoObj):Long
 
     @Query("SELECT * FROM VideoObj order by timestamp desc")

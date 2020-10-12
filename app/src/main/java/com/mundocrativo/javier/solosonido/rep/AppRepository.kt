@@ -26,6 +26,8 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
     val openVideoListUrlLiveData : MutableLiveData<Pair<Int,List<VideoObj>>> by lazy { MutableLiveData<Pair<Int,List<VideoObj>>>() }
     var defaultPlayListId : Long? = null
     val playVideoListPair : MutableLiveData<Pair<Int,List<VideoObj>>> by lazy { MutableLiveData<Pair<Int,List<VideoObj>>>() } //--- para enviar el listado al player
+    private var playerIsOpen = false
+
 
     fun checkServOk(pref:AppPreferences):Boolean{
         if(pref.server.isNotEmpty()){
@@ -210,6 +212,7 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
         itemList.forEach { it.queueId=defaultIndex }
         queueFieldDao.deleteFromQueue(defaultIndex)
         queueFieldDao.insertList(itemList)
+        Log.v("msg","Save actualqueuelist size:${itemList.size}")
     }
 
     private fun getDefaulQueueIndex():Long{
@@ -231,6 +234,12 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
     fun putMetadataListCache(dataList:List<AudioMetadata>){
         dataList.forEach { metadataCache.poneMetadata(it) }
     }
+
+    fun setPlayerIsOpen(isOpen:Boolean){
+        playerIsOpen = isOpen
+    }
+
+    fun getPlayerIsOpen() = playerIsOpen
 
 }
 

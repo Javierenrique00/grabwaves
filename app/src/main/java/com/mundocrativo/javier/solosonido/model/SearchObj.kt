@@ -8,7 +8,7 @@ data class SearchObj(
     val currentRef : String,
     val items :  List<VideoSearch>,
     val results : String,
-    val nextpageRef : String
+    val nextpageRef : String?
 
 )
 

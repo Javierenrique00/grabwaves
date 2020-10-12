@@ -27,8 +27,8 @@ import org.koin.ext.scope
 class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
 
     val musicServiceConnection = appRepository.musicServiceConnection
-    val queueLiveData = musicServiceConnection.queueLiveData
-    val nowPlaying = appRepository.musicServiceConnection.nowPlaying
+//    val queueLiveData = musicServiceConnection.queueLiveData
+//    val nowPlaying = appRepository.musicServiceConnection.nowPlaying
     val playBackState = musicServiceConnection.playbackState
     val durationLiveData = MediaHelper.durationLiveData
     val videoLista = mutableListOf<VideoObj>()
@@ -36,7 +36,13 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
     val nowPlayingInfo : MutableLiveData<InfoObj> by lazy { MutableLiveData<InfoObj>() }
     var actualQueueIndex = 0 //-- el indice de la canción que se está tocando
     var initLoading = false
-    val playVideoListPair = appRepository.playVideoListPair
+    val updateVideoListAdapter : MutableLiveData<List<VideoObj>> by lazy { MutableLiveData<List<VideoObj>>() }
+    //val playVideoListPair = appRepository.playVideoListPair
+
+
+    init {
+        appRepository.setPlayerIsOpen(true)
+    }
 
 
 
@@ -47,9 +53,10 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
 
     override fun onCleared() {
         super.onCleared()
-        Log.e("msg","Cerrando el PlayerViewmodel, liberando musicserverconnection")
+        Log.e("msg","------viewModel close -------------------------------------")
         musicServiceConnection.unsubscribe(MUSIC_ROOT,subscriptionCallback)
     }
+
 
     val subscriptionCallback = object : MediaBrowserCompat.SubscriptionCallback(){
 
@@ -57,13 +64,12 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
             parentId: String,
             children: MutableList<MediaBrowserCompat.MediaItem>
         ) {
-            //Log.v("msg","On loadChildren parentId:$parentId children:${children.size}")
-            children.forEach{
-                //Log.v("msg","$it.description.mediaId")
+            val tempVideoLista = children.map { MediaHelper.convMediaItemToVideoObj(it) }
+            if(children.size>0) {
+                updateCurrentPlayList()
+                updateVideoListAdapter.postValue(tempVideoLista)
             }
-            //Log.v("msg","---------------------")
         }
-
     }
 
 
@@ -155,21 +161,18 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
 
     fun LoadDefaultPlayListToPlayer(pref:AppPreferences)= viewModelScope.launch(Dispatchers.IO){
         initLoading = true
-        val defaultQueue = appRepository.getDefaultQueue()
-        val newList = mutableListOf<VideoObj>()
-        defaultQueue.forEach {
-            val video = VideoObj()
-            video.url = it.itemId
-            newList.add(video)
-        }
+        val newList = appRepository.getDefaultQueue().map { VideoObj(it.itemId) }
+        Log.v("msg","---> loading default list size=${newList.size}")
         appRepository.openVideoListUrlLiveData.postValue(Pair(MediaHelper.QUEUE_NEW_NOSAVE,newList))
         withContext(Dispatchers.Main){
             delay(2000)
-            //Log.v("msg","Traying to play item in queue:${pref.lastSongIndexPlayed}  time:${pref.lastTimePlayed}")
+            Log.v("msg","Traying to play item in queue:${pref.lastSongIndexPlayed}  time:${pref.lastTimePlayed}")
             playItemOnQueue(pref.lastSongIndexPlayed,pref.lastTimePlayed*1000L)
             initLoading = false
         }
     }
+
+
 
     companion object{
         const val MUSIC_ROOT = "MUSICROOT"

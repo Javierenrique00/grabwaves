@@ -28,6 +28,7 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
     //var enlaceExternal :String? = null
     val musicServiceConnection = appRepository.musicServiceConnection
     val openVideoUrlLiveData = appRepository.openVideoUrlLiveData
+    var lastUrlValue = ""
     val openVideoListUrlLiveData = appRepository.openVideoListUrlLiveData
     var lastListOpenUrl : List<VideoObj> = mutableListOf()
     val videoListLiveData : MutableLiveData<List<VideoObj>> by lazy { MutableLiveData<List<VideoObj>>() }
@@ -153,7 +154,7 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
         }
 
         //--- Ahora envia la lista directamente al fragmento player
-        playVideoListPair.postValue(Pair(queueCmd,finalVideoList))
+        //playVideoListPair.postValue(Pair(queueCmd,finalVideoList)) no lo vamos a enviar al player
 
         //--Ahora envía la lista al exoplayer
         //val audioList = mutableListOf<AudioMetadata>()
@@ -188,8 +189,8 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
         withContext(Dispatchers.Main){
             MediaHelper.cmdSendListToPlayer(queueCmd,0,audioList,musicServiceConnection)
 
-            //--- para que cambie al player
-            pageChangePager.postValue(2) //--salta al player una vez envía todas las canciones
+            //--- para que cambie al player --> no vamos a abrir el player de manera forzada
+            //if(!appRepository.getPlayerIsOpen()) pageChangePager.postValue(2) //--salta al player una vez envía todas las canciones
         }
 
 

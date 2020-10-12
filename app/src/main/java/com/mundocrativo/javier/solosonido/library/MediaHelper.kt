@@ -25,18 +25,12 @@ import com.mundocrativo.javier.solosonido.util.mediaUri
 
 object MediaHelper {
 
-//    val currentMediaItems = mutableListOf<MediaBrowserCompat.MediaItem>()
-//    val metadataItems = mutableListOf<MediaMetadataCompat>()
-//    private var currentIndex : Int? = null
+    //---- tiene una lista de todos los items del player
+    val videosMetadata = mutableListOf<MediaBrowserCompat.MediaItem>()
 
     private var commandMediaItem : MediaBrowserCompat.MediaItem? = null
     private var commandMetadataItem : MediaMetadataCompat? = null
     val durationLiveData : MutableLiveData<Triple<Long,Long,Int>> by lazy {  MutableLiveData<Triple<Long,Long,Int>>() }
-
-
-    fun populateItems():MutableList<MediaBrowserCompat.MediaItem>{
-        return mutableListOf<MediaBrowserCompat.MediaItem>()
-    }
 
 
     //---https://developer.android.com/reference/kotlin/android/support/v4/media/MediaMetadataCompat.Builder
@@ -62,12 +56,15 @@ object MediaHelper {
 
     //---
     private fun convFromAudiometadataToMediaItem(audio:AudioMetadata):MediaBrowserCompat.MediaItem? {
+        val bundle = Bundle()
+        bundle.putInt("DURATION",audio.duration)
         val desc = MediaDescriptionCompat.Builder()
             .setMediaId(audio.mediaId)
             .setMediaUri(Uri.parse(audio.url))
             .setTitle(audio.title)
             .setSubtitle(audio.artist)
             .setIconUri(Uri.parse(audio.thumbnailUrl))
+            .setExtras(bundle)
             .build()
 
         return MediaBrowserCompat.MediaItem(desc, MediaBrowserCompat.MediaItem.FLAG_PLAYABLE)
@@ -75,16 +72,18 @@ object MediaHelper {
 
 
 //----- Esta es la conversion de MediaItem a VideoObj,
-    fun convMediaItemToVideoObj(mediaItem:MediaSessionCompat.QueueItem,context:Context):VideoObj{
+    fun convMediaItemToVideoObj(mediaItem:MediaBrowserCompat.MediaItem):VideoObj{
+        val bundle = mediaItem.description.extras
+        val duration = bundle!!.getInt("DURATION",0)
         return VideoObj(
             0,
             mediaItem.description.mediaId?:"",
             mediaItem.description.title.toString(),
-            "--- No tengo Channel ---",
+            mediaItem.description.subtitle.toString(),
             mediaItem.description.iconUri.toString(),
             0,
             0,
-            0,
+            duration,
             0,
             0,
             0,
@@ -92,7 +91,7 @@ object MediaHelper {
             false,
             false,
             0,
-            BitmapDrawable(context.resources,mediaItem.description.iconBitmap),
+            null,
             false,
             ""
         )
@@ -128,7 +127,7 @@ object MediaHelper {
         return queueCmd
     }
 
-//----- comando para enviar una lista pcompleta
+//----- comando para enviar una lista completa
     fun cmdSendListToPlayer(queueCmd: Int,index:Int,metadataList:ArrayList<AudioMetadata>,msc:MusicServiceConnection){
         val bundle = Bundle()
         bundle.putInt(CMD_SEND_LIST_PARAM_COMMAND,queueCmd)
@@ -142,26 +141,37 @@ object MediaHelper {
         val index = bundle.getInt(CMD_SEND_LIST_PARAM_INDEX)
         val metadataList = bundle.getParcelableArrayList<AudioMetadata>(CMD_SEND_LIST_PARAM_DATA)
 
-        val items = mutableListOf<MediaItem>()
-        metadataList!!.forEach { items.add(convMediaItemToExoplayer( convFromAudiometadataToMediaItem(it)!!)) }
+        val exoItems = mutableListOf<MediaItem>()
+        val mediaItems = mutableListOf<MediaBrowserCompat.MediaItem>()
+        metadataList!!.forEach {
+            val mediaItem = convFromAudiometadataToMediaItem(it)
+            val exoItem =    convMediaItemToExoplayer( mediaItem!! )
+            mediaItems.add(mediaItem)
+            exoItems.add(exoItem)
+        }
 
         var changeCmd = queueCmd
         if(exoPlayer.mediaItemCount==0) changeCmd = QUEUE_NEW
         when(changeCmd){
             QUEUE_NEW ->{
+                videosMetadata.clear()
+                videosMetadata.addAll(mediaItems)
+
                 exoPlayer.playWhenReady = true
                 exoPlayer.stop(true)
-                exoPlayer.addMediaItems(items)
+                exoPlayer.addMediaItems(exoItems)
                 exoPlayer.prepare()
                 exoPlayer.seekTo(0,0)
             }
             QUEUE_ADD ->{
-                exoPlayer.addMediaItems(items)
+                videosMetadata.addAll(mediaItems)
+                exoPlayer.addMediaItems(exoItems)
             }
             QUEUE_NEXT ->{
                 val nextIndex = exoPlayer.currentWindowIndex + 1
+                videosMetadata.addAll(nextIndex,mediaItems)
                 //Log.v("msg","nextindex:$nextIndex")
-                exoPlayer.addMediaItems(nextIndex,items)
+                exoPlayer.addMediaItems(nextIndex,exoItems)
             }
         }
     }

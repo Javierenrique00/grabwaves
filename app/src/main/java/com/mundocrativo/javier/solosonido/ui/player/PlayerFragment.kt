@@ -35,16 +35,17 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.lang.Exception
 import java.util.*
 
 class PlayerFragment : Fragment() {
 
-    private val viewModel by sharedViewModel<PlayerViewModel>()
+    //private val viewModel by sharedViewModel<PlayerViewModel>()
+    private val viewModel : PlayerViewModel by viewModel()
 
     private lateinit var videoPlayerDataAdapter: VideoPlayerDataAdapter
     private lateinit var videoPairApi : VideoPairApi
-    private lateinit var itemChangeApi: ItemChangeApi
     private lateinit var moveApi: MoveApi
     private lateinit var pref : AppPreferences
     private lateinit var imageLoader : ImageLoader
@@ -73,7 +74,6 @@ class PlayerFragment : Fragment() {
         view.timeSeekbar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 if(!seekBarControl.isRunning){
-                    //limitTimeTxt.text = Util.calcDeltaTiempo(0, p1.toLong()) + "/" + seekBarControl.maxStr
                     limitTimeTxt.text = Util.shortHour(ISO8601.TIME_LOCAL_COMPLETE.format(TimeSpan(p1*1000.0)))  +" / "+ seekBarControl.maxStr
                 }
             }
@@ -86,7 +86,6 @@ class PlayerFragment : Fragment() {
             override fun onStopTrackingTouch(p0: SeekBar?) {
                 //---> tiene que enviar la nueva posicion
                 viewModel.playItemOnQueue(viewModel.actualQueueIndex,timeSeekbar.progress*1000L)
-                //updateSeekBar()  //-- para que haya un ciclo cada segundo para actualizar el seekbar
             }
 
         })
@@ -116,7 +115,6 @@ class PlayerFragment : Fragment() {
             val actQueueItem  = it.activeQueueItemId
             //Log.v("msg","queue Playback State Position=${it.position}  estate=$isPlaying activeQueueItem=$actQueueItem")
             showPlayPauseButton()
-            //updateVideoListaEsPlaying(actQueueItem.toInt()) --- todo, se quitó porque por ahora no lo vamos a revizar
         })
 
         //--- es el now playing. no se ve la posición en la cola
@@ -138,23 +136,6 @@ class PlayerFragment : Fragment() {
             }
         })
 
-        //--- esta es la cola del player para compararla con la local y hacer correcciones en la local si se ha saltado algún item por error de media
-        viewModel.queueLiveData.observe(viewLifecycleOwner, androidx.lifecycle.Observer { queueList ->
-            //--- hay que hacer la conversion a VideoObj
-            val tempList = mutableListOf<VideoObj>()
-            queueList.forEach {queueItem ->
-                val item = MediaHelper.convMediaItemToVideoObj(queueItem,context!!)
-                tempList.add(item)
-            }
-            findDifferences(tempList,viewModel.videoLista)
-
-        })
-
-//-- se quitó porque no se usa
-//        viewModel.nowPlaying.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
-//            //Log.v("msg","Now Playing de prueba ${it.description.title}")
-//        })
-
         viewModel.durationLiveData.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
             //Log.v("msg","queue Exoplayer--> Position:${it.first} ContentDuration:${it.second} QueueIndex:${it.third}")
             seekBarControl.setProgress(it.first,it.second)
@@ -162,8 +143,15 @@ class PlayerFragment : Fragment() {
              if((it.second>0) and (it.second<86400000)){
                  seekBarControl.maxStr = Util.shortHour(ISO8601.TIME_LOCAL_COMPLETE.format(TimeSpan(it.second*1.0)))
                  savePlayingState(viewModel.actualQueueIndex,(it.first/1000L).toInt())
-                 if((viewModel.actualQueueIndex!=it.third) or (viewModel.actualQueueIndex==0)) updateVideoListaEsPlaying(it.third) //----todo vamos a probar si esto sirva para poner el item actual en play
-            }else{
+                 //if((viewModel.actualQueueIndex!=it.third) or (viewModel.actualQueueIndex==0)) updateVideoListaEsPlaying(it.third) //----todo vamos a probar si esto sirva para poner el item actual en play
+                 if(viewModel.videoLista.size>it.third){
+                     if(!viewModel.videoLista[it.third].esPlaying) updateVideoListaEsPlaying(it.third)
+                 }else{
+                     Log.e("msg","Error in videolista.size ${viewModel.videoLista.size} index to put:${it.third}")
+                 }
+
+
+             }else{
                  seekBarControl.maxStr = "00:00:00"
             }
         })
@@ -184,30 +172,34 @@ class PlayerFragment : Fragment() {
             }
         })
 
-        //--- esta es la lista que ahora vamos a recibir directamente del history
-        viewModel.playVideoListPair.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
-            //--- delte
-            it.second.forEach {
-                it.esSelected = false
-                it.esUrlReady = false
-                it.esInfoReady = false
+        //--- Esta es la info que carga en el recyclerView
+        viewModel.updateVideoListAdapter.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
+            val tama = viewModel.videoLista.size
+            if(tama>0){
+                it.forEachIndexed { index, videoObj ->
+                    if(index<tama){
+                        if(!videoObj.url.contentEquals(viewModel.videoLista[index].url)){
+                            viewModel.videoLista[index] = videoObj
+                            videoPlayerDataAdapter.notifyItemChanged(index,videoObj)
+                        }
+                    }else{
+                        //-- tiene que agregar los que faltan
+                        viewModel.videoLista.add(index,videoObj)
+                        videoPlayerDataAdapter.notifyItemInserted(index)
+                    }
+                }
+                //---tiene que borrar los items mayores
+                for(x in it.size until tama){
+                    viewModel.videoLista.removeAt(it.size)
+                    videoPlayerDataAdapter.notifyItemRemoved(it.size)
+                }
+            }else{
+                viewModel.videoLista.clear()
+                viewModel.videoLista.addAll(it)
+                videoPlayerDataAdapter.submitList(viewModel.videoLista)
+                videoPlayerDataAdapter.notifyDataSetChanged()
             }
-            when(it.first){
-                MediaHelper.QUEUE_NEW ->{
-                    viewModel.videoLista.clear()
-                    viewModel.videoLista.addAll(it.second)
-                    viewModel.actualQueueIndex = 0
-                }
-                MediaHelper.QUEUE_ADD ->{
-                    viewModel.videoLista.addAll(it.second)
-                }
-                MediaHelper.QUEUE_NEXT->{
-                    if(viewModel.videoLista.size>viewModel.actualQueueIndex) viewModel.videoLista.addAll(viewModel.actualQueueIndex + 1,it.second) else viewModel.videoLista.addAll(viewModel.actualQueueIndex,it.second)
-                }
-            }
-            viewModel.updateCurrentPlayList()
-            videoPlayerDataAdapter.submitList(viewModel.videoLista)
-            videoPlayerDataAdapter.notifyDataSetChanged()
+
         })
 
     }
@@ -217,19 +209,27 @@ class PlayerFragment : Fragment() {
         //--- para actualizar el contenido apenas se carga
         //Log.v("msg","--- Resume view")
         //Log.v("msg","videoListSize ${viewModel.videoLista.size}")
-        if(viewModel.videoLista.size==0) viewModel.LoadDefaultPlayListToPlayer(pref)
+        if(viewModel.videoLista.size==0) viewModel.LoadDefaultPlayListToPlayer(pref) else {
+            if(videoPlayerDataAdapter.currentList.size==0) {
+                //-- No tengo la lista cargada en el Recyclerview, hay que cargarla
+                //Log.v("msg","No tengo lista cargada en el recyclerview, tengo que cargarla")
+                videoPlayerDataAdapter.submitList(viewModel.videoLista)
+                videoPlayerDataAdapter.notifyDataSetChanged()
+            }
+        }
+
 
         viewModel.sendPlayDuration()
-
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        //Log.v("msg","---- Destroy view")
+        Log.v("msg","----------------------------- Destroy view")
         //------------
         videoPairApi.acaba()
-        itemChangeApi.acaba()
         moveApi.acaba()
+
+        viewModel.appRepository.setPlayerIsOpen(false)
     }
 
     private fun setupRecyclerFlow(){
@@ -267,16 +267,7 @@ class PlayerFragment : Fragment() {
             }
         }
 
-        //---inicia los eventos del flow de cambio de item
-        itemChangeApi = ItemChangeApi()
-        val flujoItem = flowFromItem(itemChangeApi).buffer(Channel.UNLIMITED)
 
-        //--- Se quita el GLobalScope
-        lifecycleScope.launch(Dispatchers.Main) {
-            flujoItem.collect{
-                updateItem(it.first,it.second)
-            }
-        }
 
         //---inicia los eventos del flow del move
             moveApi = MoveApi()
@@ -368,11 +359,11 @@ class PlayerFragment : Fragment() {
                     viewModel.playItemOnQueue(it.position,0L)
                     val itemSelected = it.item
                     itemSelected.esSelected = true
-                    itemChangeApi.genera(Pair(it.position,itemSelected))
+                    updateItem(it.position,itemSelected)
                     lifecycleScope.launch {
                         delay(100)
                         itemSelected.esSelected = false
-                        itemChangeApi.genera(Pair(it.position,itemSelected))
+                        updateItem(it.position,itemSelected)
                     }
 
                 }
@@ -444,7 +435,7 @@ class PlayerFragment : Fragment() {
             viewModel.actualQueueIndex = activeQueueItem
             val cambiado = viewModel.videoLista[viewModel.actualQueueIndex]
             cambiado.esPlaying = true
-            itemChangeApi.genera(Pair(viewModel.actualQueueIndex,cambiado))
+            updateItem(viewModel.actualQueueIndex,cambiado)
         }else{
             Log.e("msg","No puede actualizar actualQueueIndex,  actualQueueIndex(no update)=$activeQueueItem anterior(try actual):${viewModel.actualQueueIndex}  tamaño videoLista=${viewModel.videoLista.size}")
         }
