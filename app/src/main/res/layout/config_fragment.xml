@@ -33,7 +33,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="13dp"
+        android:layout_marginTop="16dp"
         android:text="@string/swTextLq"
         android:textOff="@string/swTextLq"
         android:textOn="@string/swTextHq"
@@ -75,6 +75,18 @@
         android:text="@string/checkBt"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/serverTb" />
+
+    <Switch
+        android:id="@+id/swTrans"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="16dp"
+        android:text="@string/swTextTransFalse"
+        android:textOff="@string/swTextTransFalse"
+        android:textOn="@string/swTextTransTrue"
+        app:layout_constraintStart_toEndOf="@+id/qualitySw"
+        app:layout_constraintTop_toBottomOf="@+id/app_bar_back" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

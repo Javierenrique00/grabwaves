@@ -19,6 +19,7 @@ package com.mundocrativo.javier.solosonido.service
 import android.app.Notification
 import android.app.PendingIntent
 import android.content.Intent
+import android.media.session.PlaybackState
 import android.net.Uri
 import android.os.Bundle
 import android.os.ResultReceiver
@@ -31,6 +32,7 @@ import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.MutableLiveData
 import androidx.media.MediaBrowserServiceCompat
 import androidx.media.MediaBrowserServiceCompat.BrowserRoot.EXTRA_RECENT
 import com.google.android.exoplayer2.*
@@ -40,7 +42,9 @@ import com.google.android.exoplayer2.ext.cast.SessionAvailabilityListener
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.ext.mediasession.TimelineQueueEditor
 import com.google.android.exoplayer2.ext.mediasession.TimelineQueueNavigator
+import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource
+import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.source.MediaSourceFactory
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.ui.PlayerNotificationManager
@@ -51,6 +55,7 @@ import com.google.android.gms.cast.MediaQueueItem
 import com.google.android.gms.cast.framework.CastContext
 import com.mundocrativo.javier.solosonido.R
 import com.mundocrativo.javier.solosonido.library.MediaHelper
+import com.mundocrativo.javier.solosonido.model.Converted
 import com.mundocrativo.javier.solosonido.model.ListaAudioMetadata
 import com.mundocrativo.javier.solosonido.ui.player.PLAYBACK_STATE_PAUSE
 import com.mundocrativo.javier.solosonido.ui.player.PLAYBACK_STATE_PLAY
@@ -80,7 +85,6 @@ import kotlinx.coroutines.launch
 open class MusicService : MediaBrowserServiceCompat() {
 
     private lateinit var notificationManager: UampNotificationManager
-
     // The current player will either be an ExoPlayer (for local playback) or a CastPlayer (for
     // remote playback through a Cast device).
     private lateinit var currentPlayer: Player
@@ -89,7 +93,6 @@ open class MusicService : MediaBrowserServiceCompat() {
 
     protected lateinit var mediaSession: MediaSessionCompat
     protected lateinit var mediaSessionConnector: MediaSessionConnector
-
 
     private val uAmpAudioAttributes = AudioAttributes.Builder()
         .setContentType(C.CONTENT_TYPE_MUSIC)
@@ -107,13 +110,16 @@ open class MusicService : MediaBrowserServiceCompat() {
         )
     }
 
+//--- para tratar de buscar sobre los mp3s
+    val extractorFactory = DefaultExtractorsFactory().setConstantBitrateSeekingEnabled(false) //---todo se puso en false, pero no se ve ningun efecto notorio
+
 
     /**
      * Configure ExoPlayer to handle audio focus for us.
      * See [Player.AudioComponent.setAudioAttributes] for details.
      */
     private val exoPlayer: ExoPlayer by lazy {
-        SimpleExoPlayer.Builder(this).build().apply {
+        SimpleExoPlayer.Builder(this).setMediaSourceFactory(DefaultMediaSourceFactory(this,extractorFactory)).build().apply {
             setAudioAttributes(uAmpAudioAttributes, true)
             setHandleAudioBecomingNoisy(true)
             addListener(playerListener)
@@ -225,8 +231,6 @@ open class MusicService : MediaBrowserServiceCompat() {
 
         result.sendResult(MediaHelper.videosMetadata)
     }
-
-
 
 
     private inner class UampQueueNavigator(
@@ -425,6 +429,14 @@ open class MusicService : MediaBrowserServiceCompat() {
             }
         }
 
+        override fun onIsLoadingChanged(isLoading: Boolean) {
+            super.onIsLoadingChanged(isLoading)
+            val bundle = Bundle()
+            bundle.putBoolean(PLAYER_EVENT_ISLOADING_PARAM,isLoading)
+            mediaSession.sendSessionEvent(PLAYER_EVENT_ISLOADING_CMD,bundle)
+
+        }
+
         override fun onPlayerError(error: ExoPlaybackException) {
             Log.e("msg","Player error------------")
             var message = R.string.generic_error;
@@ -489,3 +501,6 @@ open class MusicService : MediaBrowserServiceCompat() {
     }
 
 }
+
+const val PLAYER_EVENT_ISLOADING_CMD = "isloadingevent"
+const val PLAYER_EVENT_ISLOADING_PARAM = "isloadingparam"

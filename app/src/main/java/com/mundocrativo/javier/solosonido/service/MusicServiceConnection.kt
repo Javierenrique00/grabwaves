@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Bundle
 import android.os.Handler
 import android.os.ResultReceiver
+import android.renderscript.BaseObj
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
@@ -21,6 +22,7 @@ class MusicServiceConnection(val context: Context, serviceComponent: ComponentNa
     val queueLiveData : MutableLiveData<List<MediaSessionCompat.QueueItem>> by lazy { MutableLiveData<List<MediaSessionCompat.QueueItem>>() }
     val isConnected = MutableLiveData<Boolean>().apply { postValue(false) }
     val networkFailure = MutableLiveData<Boolean>().apply { postValue(false) }
+    val isLoading : MutableLiveData<Boolean> by lazy { MutableLiveData<Boolean>() }
 
 
     val playbackState = MutableLiveData<PlaybackStateCompat>().apply { postValue(EMPTY_PLAYBACK_STATE) }
@@ -31,6 +33,7 @@ class MusicServiceConnection(val context: Context, serviceComponent: ComponentNa
 
     private val mediaBrowserConnectionCallback = MediaBrowserConnectionCallback(context)
     private val mediaBrowser = MediaBrowserCompat(context,serviceComponent,mediaBrowserConnectionCallback,null).apply { connect() }
+
 
     private lateinit var mediaController: MediaControllerCompat
 
@@ -115,11 +118,17 @@ class MusicServiceConnection(val context: Context, serviceComponent: ComponentNa
 
         override fun onSessionEvent(event: String?, extras: Bundle?) {
             super.onSessionEvent(event, extras)
-            Log.e("msg","Session event Message (No estamos seguros que sea error) ")
-//            when (event) {
-//                //NETWORK_FAILURE -> networkFailure.postValue(true)
-//            }
+
+            when (event) {
+                PLAYER_EVENT_ISLOADING_CMD ->{
+                    isLoading.postValue(extras?.getBoolean(PLAYER_EVENT_ISLOADING_PARAM))
+                }
+
+
+                //NETWORK_FAILURE -> networkFailure.postValue(true)
+            }
         }
+
 
 
         /**

@@ -54,6 +54,8 @@ class VideoSearchDataAdapter(val context:Context,val event:MutableLiveData<Searc
             if(item.esSelected) backColor = R.color.ColorSelectfondo
             holder.layout.setBackgroundColor(context.getColor(backColor))
 
+            holder.servStateImg.visibility = View.GONE
+
         }
 
     }
@@ -68,6 +70,7 @@ class VideoSearchDataAdapter(val context:Context,val event:MutableLiveData<Searc
         var channel : TextView = root.channelTt
         var thumbnail : ImageView = root.videoThumbnail
         var idDbField : TextView = root.idDbField
+        val servStateImg : ImageView = root.servState
     }
 
 }

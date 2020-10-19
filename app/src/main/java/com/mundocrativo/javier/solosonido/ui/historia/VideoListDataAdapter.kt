@@ -86,6 +86,8 @@ class VideoListDataAdapter(val context: Context,val event:MutableLiveData<VideoL
                 }
             }
 
+            holder.servStateImg.visibility = View.INVISIBLE
+
             //--para cargar id de la base de datos en el campo idDbField que es un dummy
             holder.idDbField.text = item.id.toString()
 
@@ -100,6 +102,7 @@ class VideoListDataAdapter(val context: Context,val event:MutableLiveData<VideoL
         var channel : TextView = root.channelTt
         var thumbnail : ImageView = root.videoThumbnail
         var idDbField : TextView = root.idDbField
+        val servStateImg : ImageView = root.servState
 
         fun swipeRight(index:Int){
             event.value = VideoListEvent.OnSwipeRight(index)

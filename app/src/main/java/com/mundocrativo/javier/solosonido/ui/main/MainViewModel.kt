@@ -12,11 +12,13 @@ import androidx.lifecycle.viewModelScope
 import coil.load
 import com.google.android.gms.cast.framework.CastContext
 import com.mundocrativo.javier.solosonido.library.MediaHelper
+import com.mundocrativo.javier.solosonido.library.MediaHelper.QUEUE_NEW
 import com.mundocrativo.javier.solosonido.model.AudioMetadata
 import com.mundocrativo.javier.solosonido.model.VideoObj
 import com.mundocrativo.javier.solosonido.rep.AppRepository
 import com.mundocrativo.javier.solosonido.ui.historia.KIND_URL_PLAYLIST
 import com.mundocrativo.javier.solosonido.ui.historia.KIND_URL_VIDEO
+import com.mundocrativo.javier.solosonido.ui.historia.PRELOAD_INPROCESS
 import com.mundocrativo.javier.solosonido.util.AppPreferences
 import com.mundocrativo.javier.solosonido.util.Util
 import com.soywiz.klock.DateTime
@@ -41,7 +43,8 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
     var isServerChecked = false
     //--- observer para lanzar a otro tabfragment
     val pageChangePager : MutableLiveData<Int> by lazy { MutableLiveData<Int>() }
-
+    val showToastMessage : MutableLiveData<String> by lazy { MutableLiveData<String>() }
+    val preloadProgress : MutableLiveData<Int> by lazy { MutableLiveData<Int>() }
 
     suspend fun checkForServer(pref: AppPreferences):Boolean = withContext(Dispatchers.IO){
         if(!isServerChecked){
@@ -86,7 +89,7 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
                         it.duration,
                         videoIn.timestamp,
                         videoIn.kindMedia,
-                        0,
+                        0,"",0,
                         true,
                         false,
                         false,
@@ -141,7 +144,7 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
     }
 
 
-    fun launchPlayerMultiple(queueCmd:Int,playVideoList:List<VideoObj>,pref:AppPreferences,context: Context)= viewModelScope.launch(Dispatchers.IO){
+    fun launchPlayerMultiple(queueCmd:Int,playVideoList:List<VideoObj>,pref:AppPreferences,msgPreload:String)= viewModelScope.launch(Dispatchers.IO){
 
         var queueCmdUpdate = queueCmd
         //---crea la lista de videos final agregando los videos de la playlist
@@ -153,11 +156,7 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
             }
         }
 
-        //--- Ahora envia la lista directamente al fragmento player
-        //playVideoListPair.postValue(Pair(queueCmd,finalVideoList)) no lo vamos a enviar al player
-
         //--Ahora envía la lista al exoplayer
-        //val audioList = mutableListOf<AudioMetadata>()
         val audioList = ArrayList<AudioMetadata>()
         finalVideoList.forEach {
             var esVacio = true
@@ -176,13 +175,43 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
                         it.url,
                         it.title,
                         it.channel,
-                        Util.createUrlConnectionStringPlay(pref.server, it.url, pref.hQ),
+                        Util.createUrlConnectionStringPlay(pref.server, it.url, pref.hQ,pref.trans,false),
                         it.thumbnailUrl,
                         it.duration
                     )
                 )
             }
         }
+
+        //--> Para hacer el preload
+        if((audioList.size>0) and (queueCmd==QUEUE_NEW)) {
+            var result = 0
+            val fullDuration = audioList[0].duration*1000
+            val url = audioList[0].mediaId
+            launch {
+                do{
+                    showToastMessage.postValue(msgPreload)
+                    result = appRepository.preloadSong(pref,url)
+                }while (result == PRELOAD_INPROCESS)
+            }
+
+            //--vamos a ver el avance de la conversion
+            var salida = false
+            do{
+                delay(100)
+                appRepository.getConvertedFiles(pref,Util.md5FileName(pref,url))?.let {conv->
+                    if(conv.conversion.size>0){
+                        val ms = conv.conversion[0].msconverted
+                        val percent = 100*ms/fullDuration
+                        preloadProgress.postValue((percent/1000L).toInt())
+                    }else{
+                        salida = true
+                    }
+                }
+            }while (!salida)
+            preloadProgress.postValue(100)
+        }
+
         //---Tenemos el audio list con toda la metadata
         appRepository.putMetadataListCache(audioList)
 

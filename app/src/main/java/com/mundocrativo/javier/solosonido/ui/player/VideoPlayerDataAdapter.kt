@@ -98,6 +98,19 @@ class VideoPlayerDataAdapter(val context: Context, val event:MutableLiveData<Vid
                 holder.thumbnail.setImageDrawable(item.thumbnailImg)
             }
 
+            //--Para colocar el estado del servidor
+            when(item.servState){
+                SERV_STATE_DOWNLADED ->{
+                    holder.servStateImg.setImageResource(R.drawable.ic_baseline_check_circle_24)
+                    holder.servStateImg.visibility = View.VISIBLE
+                }
+                SERV_STATE_DOWNLOADING ->{
+                    holder.servStateImg.setImageResource(R.drawable.ic_baseline_swap_horizontal_circle_24)
+                    holder.servStateImg.visibility = View.VISIBLE
+                }
+                else -> holder.servStateImg.visibility = View.INVISIBLE
+            }
+
             //--para cargar la posición de la lista para ser borrada
             holder.index.text = position.toString()
 
@@ -116,6 +129,7 @@ class VideoPlayerDataAdapter(val context: Context, val event:MutableLiveData<Vid
         var channel : TextView = root.channelTt
         var thumbnail : ImageView = root.videoThumbnail
         var index : TextView = root.idDbField
+        val servStateImg : ImageView = root.servState
 
         fun swipeRight(index:Int){
             event.value = VideoPlayerListEvent.OnSwipeRight(index)

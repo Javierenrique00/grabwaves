@@ -97,10 +97,12 @@ object Util {
         return  result
     }
 
-    fun createUrlConnectionStringPlay(server:String,videoLetras:String,hQ:Boolean):String {
+    fun createUrlConnectionStringPlay(server:String,videoLetras:String,hQ:Boolean,trans:Boolean,preload:Boolean):String {
         val videoBase64 = Util.convStringToBase64(videoLetras)
         val quality = if(hQ) "hq" else "lq"
-        val ruta = server + "/?link="+videoBase64+"&q=$quality"
+        val tranStr = if(trans) "true" else "false"
+        val preStr = if(preload) "true" else "false"
+        val ruta = server + "/?link="+videoBase64+"&q=$quality"+"&tran=$tranStr"+"&pre=$preStr"
         //Log.v("msg","Contactando streaming:$ruta")
         return ruta
     }
@@ -126,6 +128,11 @@ object Util {
 
     fun createCheckLink(pref: AppPreferences):String{
         return pref.server + "/check"
+    }
+
+    fun createConvertedLink(pref:AppPreferences,file:String?):String{
+        val hasFile = if(file!=null) "?file=$file" else ""
+        return pref.server + "/converted" + hasFile
     }
 
     fun createUrlFromVideoId(videoId:String):String{
@@ -175,6 +182,20 @@ object Util {
         if(url.contains("/playlist")) return KIND_URL_PLAYLIST
         return KIND_URL_VIDEO  //-- por ahora no asignamos KIND_URL_UNDEFINED
     }
+
+    fun hexMd5Checksum(name:String):String{
+        val digest = java.security.MessageDigest.getInstance("MD5")
+        digest.update(name.toByteArray())
+        val hexArray =  digest.digest()
+        return hexArray.fold("", { acc, byte -> acc + (byte.toUByte()).toString(16).padStart(2,'0') })
+    }
+
+    fun md5FileName(pref: AppPreferences,name: String):String{
+        val quality = if(pref.hQ) "hq" else "lq"
+        val transcode = if(pref.trans) "t" else "f"
+        return hexMd5Checksum(name)+"$quality$transcode.opus"
+    }
+
 
 
 }

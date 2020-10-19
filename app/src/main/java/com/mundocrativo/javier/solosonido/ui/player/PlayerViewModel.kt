@@ -37,7 +37,8 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
     var actualQueueIndex = 0 //-- el indice de la canción que se está tocando
     var initLoading = false
     val updateVideoListAdapter : MutableLiveData<List<VideoObj>> by lazy { MutableLiveData<List<VideoObj>>() }
-    //val playVideoListPair = appRepository.playVideoListPair
+    val converted : MutableLiveData<Converted> by lazy { MutableLiveData<Converted>() }
+    val isLoading = musicServiceConnection.isLoading
 
 
     init {
@@ -73,8 +74,9 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
     }
 
 
-    fun getUrlInfo(position:Int,videoIn:VideoObj,ruta:String):Pair<Int,VideoObj>{
+    fun getUrlInfo(position:Int,videoIn:VideoObj,ruta:String,pref: AppPreferences):Pair<Int,VideoObj>{
         val metaData = appRepository.getMetadataCache(videoIn.url) //--es posible encontrar en el cache esta metadata pero sin bitmap
+        val md5FileName = Util.md5FileName(pref,videoIn.url)
         metaData?.let {
             return Pair(position,VideoObj(
                 videoIn.id,
@@ -82,7 +84,8 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
                 it.title,
                 it.artist,
                 it.thumbnailUrl,
-                0,0,it.duration,videoIn.timestamp,9,9,true,false,false,0,null,false,"ºº"))
+                0,0,it.duration,videoIn.timestamp,9,9,md5FileName,
+                servState(md5FileName),true,false,false,0,null,false,"ºº"))
         }
         val info = appRepository.getInfoFromUrl(ruta)
         info?.let {
@@ -98,6 +101,8 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
                 videoIn.timestamp,
                 0,
                 0,
+                md5FileName,
+                servState(md5FileName),
                 true,
                 false,
                 false,
@@ -107,7 +112,7 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
                 ""
             ))
         }
-        return Pair(position,VideoObj(videoIn.id,videoIn.url,"---","---","",0,0,0,0,videoIn.kindMedia,0,true,true,false,0,null,false,""))
+        return Pair(position,VideoObj(videoIn.id,videoIn.url,"---","---","",0,0,0,0,videoIn.kindMedia,0,md5FileName,servState(md5FileName),true,true,false,0,null,false,""))
     }
 
     fun getInfoNowPlaying(ruta:String)=viewModelScope.launch(Dispatchers.IO) {
@@ -172,7 +177,23 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
         }
     }
 
+    fun loadConvertedFiles(pref: AppPreferences) = viewModelScope.launch(Dispatchers.IO){
+        Log.v("msg","--- Asking for Converted files ---")
+        appRepository.getConvertedFiles(pref,null)?.let { conv ->
+            converted.postValue(conv)
+        }
+    }
 
+    fun servState(md5FileName:String,):Int{
+        converted.value?.conversion?.forEach {
+            if(md5FileName.contentEquals(it.file)) return SERV_STATE_DOWNLOADING
+        }
+
+        converted.value?.complete?.forEach {
+            if(md5FileName.contentEquals(it)) return SERV_STATE_DOWNLADED
+        }
+        return 0
+    }
 
     companion object{
         const val MUSIC_ROOT = "MUSICROOT"

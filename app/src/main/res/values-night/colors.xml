@@ -12,5 +12,7 @@
     <color name="ColorFondoResaltado">@color/black05</color>
     <color name="ColorSelectfondo">@color/azul10</color>
     <color name="ColorDisable">@color/grey06</color>
+    <color name="ColorDownloadedOk">@color/Green06</color>
+    <color name="ColorDownloading">@color/yellow08</color>
 
 </resources>

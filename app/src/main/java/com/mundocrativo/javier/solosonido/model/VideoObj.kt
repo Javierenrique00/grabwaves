@@ -5,6 +5,7 @@ import android.widget.ImageView
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
+import com.mundocrativo.javier.solosonido.util.Util
 
 @Entity
 data class VideoObj(
@@ -19,6 +20,8 @@ data class VideoObj(
     var timestamp:Long,
     var kindMedia:Int, //---para las listas
     var total_items:Int,  //---cantidad de videos en la lista
+    var urlMd5:String,
+    var servState:Int,
     @Ignore var esInfoReady:Boolean,
     @Ignore var esUrlReady:Boolean,
     @Ignore var esSelected:Boolean,
@@ -28,7 +31,8 @@ data class VideoObj(
     @Ignore var durationStr:String
 
 ){
-    constructor() : this(0,"","","","",0,0,0,0L,0,0,false,false,false,0,null,false,"")
+    constructor() : this(0,"","","","",0,0,0,0L,0,0,"",0,false,false,false,0,null,false,"")
 
-    constructor(url:String) : this(0,url,"","","",0,0,0,0L,0,0,false,false,false,0,null,false,"")
+    constructor(url:String) : this(0,url,"","","",0,0,0,0L,0,0,
+        "",0,false,false,false,0,null,false,"")
 }

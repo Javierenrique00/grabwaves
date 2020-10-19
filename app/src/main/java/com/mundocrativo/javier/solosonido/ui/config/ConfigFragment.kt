@@ -39,7 +39,7 @@ class ConfigFragment : Fragment() {
 
         view.checkServerBt.setOnClickListener {
             //revizaServer(serverTb.text.toString(),"https://www.youtube.com/watch?v=kA9voL0edJU",false,false)
-            val urlToPlay = Util.createUrlConnectionStringPlay(serverTb.text.toString(),"https://www.youtube.com/watch?v=kA9voL0edJU",false)
+            val urlToPlay = Util.createUrlConnectionStringPlay(serverTb.text.toString(),"https://www.youtube.com/watch?v=kA9voL0edJU",false,false,false)
             launchNavigator(urlToPlay)
         }
 
@@ -49,6 +49,11 @@ class ConfigFragment : Fragment() {
             //Log.v("msg","Cambio el estado del switch a:$b")
             pref.hQ = b
             showCalidadSw(b)
+        }
+
+        view.swTrans.setOnCheckedChangeListener { compoundButton, b ->
+            pref.trans = b
+            showTransSw(b)
         }
 
         //--setup the action bar !  Para el menu
@@ -76,12 +81,18 @@ class ConfigFragment : Fragment() {
         serverTb.setText(pref.server)
         checkFormulary()
         qualitySw.isChecked = pref.hQ
+        swTrans.isChecked = pref.trans
 
     }
 
     fun showCalidadSw(estado:Boolean){
         qualitySw.text = if(estado) getString(R.string.swTextHq) else getString(R.string.swTextLq)
     }
+
+    fun showTransSw(estado:Boolean){
+        swTrans.text = if(estado) getString(R.string.swTextTransTrue) else getString(R.string.swTextTransTrue)
+    }
+
 
     fun checkFormulary():Boolean{
         val isOk = checkAddress()

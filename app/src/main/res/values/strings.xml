@@ -3,8 +3,6 @@
     //--- main fragment
     <string name="TitleMain">Conexión: http://[Servidor]:[puerto]</string>
     <string name="checkBt">Prueba</string>
-    <string name="swTextHq">Max calidad</string>
-    <string name="swTextLq">Min calidad</string>
     <string name="app_name">GrabWaves</string>
     <string name="serverUrl">http://192.168.0.68:2000</string>
 
@@ -28,6 +26,9 @@
     <string name="tab0">Historia</string>
     <string name="tab1">Buscar</string>
     <string name="tab2">Reproductor</string>
+
+    //--- History Fragment
+    <string name="msgPreload">Procesando</string>
 
     //---- Search Fragment
     <string name="searchtbhint">Buscar</string>
@@ -54,5 +55,10 @@
     <string name="Okdelete">Borrar</string>
     <string name="cancelDelete">Cancel</string>
 
+    //--- dialog configuration
+    <string name="swTextHq">Max calidad</string>
+    <string name="swTextLq">Min calidad</string>
+    <string name="swTextTransFalse">Original</string>
+    <string name="swTextTransTrue">Transcodificación</string>
 
 </resources>

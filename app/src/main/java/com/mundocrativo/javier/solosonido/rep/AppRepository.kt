@@ -9,8 +9,7 @@ import com.mundocrativo.javier.solosonido.db.QueueFieldDao
 import com.mundocrativo.javier.solosonido.db.VideoDao
 import com.mundocrativo.javier.solosonido.model.*
 import com.mundocrativo.javier.solosonido.service.MusicServiceConnection
-import com.mundocrativo.javier.solosonido.ui.historia.KIND_URL_PLAYLIST
-import com.mundocrativo.javier.solosonido.ui.historia.KIND_URL_VIDEO
+import com.mundocrativo.javier.solosonido.ui.historia.*
 import com.mundocrativo.javier.solosonido.util.AppPreferences
 import com.mundocrativo.javier.solosonido.util.Util
 import com.squareup.moshi.Moshi
@@ -22,6 +21,7 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
     val infoAdapter = moshi.adapter(InfoObj::class.java)
     val searchAdapter = moshi.adapter(SearchObj::class.java)
     val playlistAdapter = moshi.adapter(PlaylistObj::class.java)
+    val convertedAdapter = moshi.adapter(Converted::class.java)
     val openVideoUrlLiveData : MutableLiveData<Pair<Int,String>> by lazy { MutableLiveData<Pair<Int,String>>() }
     val openVideoListUrlLiveData : MutableLiveData<Pair<Int,List<VideoObj>>> by lazy { MutableLiveData<Pair<Int,List<VideoObj>>>() }
     var defaultPlayListId : Long? = null
@@ -111,7 +111,7 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
                 0,
                 0,
                 0,
-                0,
+                0,"",0,
                 false,
                 false,
                 false,
@@ -192,7 +192,7 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
         playlist.items.forEach {
             resultList.add(
                 VideoObj(
-                0, it.url?:"",it.title?:"",it.author?:"",it.thumbnail?:"",0,0,it.duration,0, KIND_URL_VIDEO,0,true,false,false,0,null,false,""))
+                0, it.url?:"",it.title?:"",it.author?:"",it.thumbnail?:"",0,0,it.duration,0, KIND_URL_VIDEO,0,"",0,true,false,false,0,null,false,""))
         }
         return resultList
     }
@@ -240,6 +240,28 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
     }
 
     fun getPlayerIsOpen() = playerIsOpen
+
+    fun getConvertedFiles(pref:AppPreferences,file:String?):Converted?{
+        val fileMD5 = Util.createConvertedLink(pref,file)
+        directCache.conexionServer(fileMD5)?.let { resultado ->
+            return convertedAdapter.fromJson(resultado)
+        }
+        return null
+    }
+
+    fun preloadSong(pref: AppPreferences,url: String):Int{
+        Log.v("msg","Preloading:$url")
+        directCache.conexionServer(Util.createUrlConnectionStringPlay(pref.server,url,pref.hQ,pref.trans,true))?.let {resultado ->
+            return when(resultado){
+                "ready" -> PRELOAD_READY
+                "inprocess" -> PRELOAD_INPROCESS
+                "error" -> PRELOAD_ERROR
+                else -> PRELOAD_ERROR
+            }
+        }
+        return PRELOAD_ERROR
+    }
+
 
 }
 

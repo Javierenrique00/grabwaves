@@ -121,7 +121,7 @@ class HistoriaFragment : Fragment() {
                         videoToPlay.url = it.second
                         val list = mutableListOf(videoToPlay)
                         Log.v("msg","Trying to play url: size =${list.size} url=${list[0].url}")
-                        viewModel.launchPlayerMultiple(it.first, list,pref,context!!)
+                        viewModel.launchPlayerMultiple(it.first, list,pref,getString(R.string.msgPreload))
                     }else{
                         //Log.v("msg","Only smooth Scroll")
                         videoRv.smoothScrollToPosition(0)
@@ -137,8 +137,16 @@ class HistoriaFragment : Fragment() {
             if(!detectVideoListEqual(it.second,viewModel.lastListOpenUrl)){
                 var queueCmd = it.first
                 if(it.first!=MediaHelper.QUEUE_NEW_NOSAVE) it.second.forEach { video -> insertItemAtTopList(Pair(it.first,video.url)) } else queueCmd = MediaHelper.QUEUE_NEW
-                viewModel.launchPlayerMultiple(queueCmd,it.second,pref,context!!)
+                viewModel.launchPlayerMultiple(queueCmd,it.second,pref,getString(R.string.msgPreload))
             }
+        })
+
+        viewModel.showToastMessage.observe(viewLifecycleOwner, Observer {
+            sendToast(it)
+        })
+
+        viewModel.preloadProgress.observe(viewLifecycleOwner, Observer {
+            preloadProgressBar.progress = it
         })
 
         //--- debe cargar los videos que están en la base de datos
@@ -347,12 +355,13 @@ class HistoriaFragment : Fragment() {
 
     fun dialogPlayMultiple(videoListToPlay:List<VideoObj>){
         //val videoListToPlay = viewModel.videoLista.filter { it.esSelected }
+        val msg = getString(R.string.msgPreload)
         val builder = AlertDialog.Builder(context!!)
             .setTitle(getString(R.string.titlequeue))
             .setMessage(getString(R.string.messageQueue))
-            .setPositiveButton(getString(R.string.queueAdd)) { p0, p1 -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_ADD,videoListToPlay,pref,context!!) }
-            .setNegativeButton(getString(R.string.queueNew)) { p0, p1 -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_NEW,videoListToPlay,pref,context!!) }
-            .setNeutralButton(getString(R.string.queueNext)) { p0, p1 -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_NEXT,videoListToPlay,pref,context!!) }
+            .setPositiveButton(getString(R.string.queueAdd)) { p0, p1 -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_ADD,videoListToPlay,pref,msg) }
+            .setNegativeButton(getString(R.string.queueNew)) { p0, p1 -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_NEW,videoListToPlay,pref,msg) }
+            .setNeutralButton(getString(R.string.queueNext)) { p0, p1 -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_NEXT,videoListToPlay,pref,msg) }
 
         val dialog =builder.create()
         dialog.show()
@@ -388,3 +397,7 @@ class HistoriaFragment : Fragment() {
 const val KIND_URL_VIDEO = 1
 const val KIND_URL_PLAYLIST = 2
 const val KIND_URL_UNDEFINED = 0
+
+const val PRELOAD_READY = 1
+const val PRELOAD_INPROCESS = 2
+const val PRELOAD_ERROR = 0

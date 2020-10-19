@@ -12,10 +12,13 @@
     <color name="ColorFondoResaltado">@color/yellow03</color>
     <color name="ColorSelectfondo">@color/yellow06</color>
     <color name="ColorDisable">@color/grey06</color>
+    <color name="ColorDownloadedOk">@color/Green06</color>
+    <color name="ColorDownloading">@color/yellow08</color>
 
     <color name="yellow02">#fff5d6</color>
     <color name="yellow03">#fee085</color>
     <color name="yellow06">#fed766</color>
+    <color name="yellow08">#FFBE00</color>
 
     <color name="azul01">#eefafc</color>
     <color name="azul03">#bbebf1</color>
@@ -34,5 +37,7 @@
 
 
     <color name="grey06">#888888</color>
+
+    <color name="Green06">#1C9521</color>
 
 </resources>

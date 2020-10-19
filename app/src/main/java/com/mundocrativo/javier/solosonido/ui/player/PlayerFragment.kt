@@ -202,6 +202,24 @@ class PlayerFragment : Fragment() {
 
         })
 
+        //---los datos de la conversión del server del server
+        viewModel.converted.observe(viewLifecycleOwner, androidx.lifecycle.Observer { converted->
+            //--- debe confrontar si hay algún item de la videolista para actualizarla
+            //--reviza los convertidos
+            viewModel.videoLista.forEachIndexed { index, vid->
+                val servState = viewModel.servState(vid.urlMd5)
+                if(servState!=vid.servState){
+                    vid.servState = servState
+                    videoPlayerDataAdapter.notifyItemChanged(index,vid)
+                }
+            }
+
+        })
+
+        viewModel.isLoading.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
+            viewModel.loadConvertedFiles(pref) //--- para pedir traer datos convertidos
+        })
+
     }
 
     override fun onResume() {
@@ -218,8 +236,10 @@ class PlayerFragment : Fragment() {
             }
         }
 
-
         viewModel.sendPlayDuration()
+
+        //--- para tener el listado de los archivos ya bajados
+        viewModel.loadConvertedFiles(pref)
     }
 
     override fun onDestroyView() {
@@ -235,7 +255,7 @@ class PlayerFragment : Fragment() {
     private fun setupRecyclerFlow(){
         //---inicia los eventos del flow del video
         videoPairApi = VideoPairApi()
-        val flujoVideo = flowFromVideoPair(videoPairApi).buffer(Channel.UNLIMITED).map { viewModel.getUrlInfo(it.first,it.second,Util.transUrlToServInfo(it.second.url,pref)) }
+        val flujoVideo = flowFromVideoPair(videoPairApi).buffer(Channel.UNLIMITED).map { viewModel.getUrlInfo(it.first,it.second,Util.transUrlToServInfo(it.second.url,pref),pref) }
 
         //--- Se quita el GLobalScope
         lifecycleScope.launch(Dispatchers.IO) {
@@ -243,7 +263,7 @@ class PlayerFragment : Fragment() {
                 lifecycleScope.launch {
                     if (it != null) {
                         delay(TIME_FOR_PAINT_UPDATE)
-                        //Log.v( "msg", "Llegó la info url: ${it.url} titulo:${it.title} for position:${it.itemPosition}" )
+                        //Log.v( "msg", "Llegó la info url: ${it.second.url} titulo:${it.second.title} for position:${it.second.itemPosition} urlMd5:${it.second.urlMd5}" )
                         //--para poner el que está sonando directamente en el es playing
                         //if (it.first == viewModel.playBackState.value!!.activeQueueItemId.toInt()) it.second.esPlaying = true todo esto nos e que hace por ahor alo quito para que no interrumpa
                         updateItem(it.first, it.second)
@@ -331,6 +351,8 @@ class PlayerFragment : Fragment() {
             viewModel.videoLista[index].esSelected = video.esSelected
             viewModel.videoLista[index].esPlaying = video.esPlaying
             viewModel.videoLista[index].duration = video.duration
+            viewModel.videoLista[index].servState = video.servState
+            viewModel.videoLista[index].urlMd5 = video.urlMd5
             videoPlayerDataAdapter.notifyItemChanged(index,video)
         }
     }
@@ -401,6 +423,11 @@ class PlayerFragment : Fragment() {
                 if ((cuenta % 10) == 0) {
                     viewModel.sendPlayDuration()
                 }
+//                if ((cuenta % 30) == 0) {
+//                    //---para traer  cada 30 segundos la lista
+//                    Log.v("msg","Trae la lista-->")
+//                    viewModel.loadConvertedFiles(pref)
+//                }
             }
         }
     }
@@ -553,3 +580,6 @@ const val PLAYBACK_STATE_PLAY = 3
 const val PLAYBACK_STATE_PAUSE = 2
 const val TIME_FOR_PAINT_UPDATE = 100L  //---ms
 const val TIME_FOR_MOVE_ITEMS_UPDATE = 2000L   //---ms
+
+const val SERV_STATE_DOWNLADED = 2
+const val SERV_STATE_DOWNLOADING = 1

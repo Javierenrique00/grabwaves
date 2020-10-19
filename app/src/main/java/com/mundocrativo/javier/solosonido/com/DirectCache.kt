@@ -50,4 +50,5 @@ class DirectCache(val cacheStrDao: CacheStrDao) {
     fun conexionServer(url:String):String?{
         return OkGetFileUrl.traeWebString(url)
     }
+
 }

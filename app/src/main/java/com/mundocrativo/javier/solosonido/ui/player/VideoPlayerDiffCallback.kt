@@ -10,7 +10,8 @@ class VideoPlayerDiffCallback : DiffUtil.ItemCallback<VideoObj>() {
                 (oldItem.esInfoReady==newItem.esInfoReady) and
                 (oldItem.esUrlReady==newItem.esUrlReady) and
                 (oldItem.esSelected==newItem.esSelected) and
-                (oldItem.esPlaying==newItem.esPlaying))
+                (oldItem.esPlaying==newItem.esPlaying) and
+                (oldItem.servState==newItem.servState))
     }
 
     override fun areItemsTheSame(oldItem: VideoObj, newItem: VideoObj): Boolean {
