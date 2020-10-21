@@ -450,7 +450,12 @@ open class MusicService : MediaBrowserServiceCompat() {
                     val itemIndex = exoPlayer.currentWindowIndex
 
                     MediaHelper.videosMetadata.removeAt(itemIndex)
-                    notifyChildrenChanged(MUSIC_ROOT)
+                    //notifyChildrenChanged(MUSIC_ROOT)
+
+                    //--- genera un evento para eliminar el item del player
+                    val bundle = Bundle()
+                    bundle.putInt(PLAYER_EVENT_DELETE_SONG_PARAM,itemIndex)
+                    mediaSession.sendSessionEvent(PLAYER_EVENT_DELETE_SONG_CMD,bundle)
 
                     exoPlayer.removeMediaItem(itemIndex)
                     exoPlayer.prepare()
@@ -504,3 +509,6 @@ open class MusicService : MediaBrowserServiceCompat() {
 
 const val PLAYER_EVENT_ISLOADING_CMD = "isloadingevent"
 const val PLAYER_EVENT_ISLOADING_PARAM = "isloadingparam"
+
+const val PLAYER_EVENT_DELETE_SONG_CMD = "deletesongevent"
+const val PLAYER_EVENT_DELETE_SONG_PARAM = "deletesongparam"

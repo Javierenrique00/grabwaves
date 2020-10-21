@@ -19,7 +19,9 @@ import com.mundocrativo.javier.solosonido.model.*
 import com.mundocrativo.javier.solosonido.rep.AppRepository
 import com.mundocrativo.javier.solosonido.service.EMPTY_PLAYBACK_STATE
 import com.mundocrativo.javier.solosonido.service.NOTHING_PLAYING
+import com.mundocrativo.javier.solosonido.ui.historia.PRELOAD_READY
 import com.mundocrativo.javier.solosonido.util.AppPreferences
+import com.mundocrativo.javier.solosonido.util.PreloadFile
 import com.mundocrativo.javier.solosonido.util.Util
 import kotlinx.coroutines.*
 import org.koin.ext.scope
@@ -39,6 +41,9 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
     val updateVideoListAdapter : MutableLiveData<List<VideoObj>> by lazy { MutableLiveData<List<VideoObj>>() }
     val converted : MutableLiveData<Converted> by lazy { MutableLiveData<Converted>() }
     val isLoading = musicServiceConnection.isLoading
+    val deleteIndexSong = musicServiceConnection.deleteIndexSong
+    val preloadProgress : MutableLiveData<Int> by lazy { MutableLiveData<Int>() }
+    private lateinit var jobPreload : Job
 
 
     init {
@@ -123,6 +128,31 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
 
     fun playItemOnQueue(index:Int,positionMs:Long){
         MediaHelper.cmdSendPlayAt(index,positionMs,musicServiceConnection)
+    }
+
+    fun forcePreloadAndPlay(pref: AppPreferences,index:Int){
+        if(this::jobPreload.isInitialized) jobPreload.cancel()
+        jobPreload = viewModelScope.launch(Dispatchers.IO){
+            //--- para hacer el preload
+            var result :Int? = null
+            val preloadFile = PreloadFile(pref,videoLista[index].duration,appRepository)
+            launch {
+                result = preloadFile.preload(videoLista[index].url)
+            }
+            loadConvertedFiles(pref)
+            preloadFile.checkProgress {
+                preloadProgress.postValue(it)
+            }
+            if(result == PRELOAD_READY){
+                withContext(Dispatchers.Main){
+                    playItemOnQueue(index,0)
+                }
+            }
+            else{
+                //showToastMessage.postValue("Error")
+            }
+        }
+
     }
 
 

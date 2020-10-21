@@ -259,7 +259,7 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
                 else -> PRELOAD_ERROR
             }
         }
-        return PRELOAD_ERROR
+        return PRELOAD_READY
     }
 
 

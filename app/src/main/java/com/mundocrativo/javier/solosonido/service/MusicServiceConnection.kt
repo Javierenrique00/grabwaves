@@ -23,6 +23,8 @@ class MusicServiceConnection(val context: Context, serviceComponent: ComponentNa
     val isConnected = MutableLiveData<Boolean>().apply { postValue(false) }
     val networkFailure = MutableLiveData<Boolean>().apply { postValue(false) }
     val isLoading : MutableLiveData<Boolean> by lazy { MutableLiveData<Boolean>() }
+    val deleteIndexSong : MutableLiveData<Int> by lazy { MutableLiveData<Int>() }
+
 
 
     val playbackState = MutableLiveData<PlaybackStateCompat>().apply { postValue(EMPTY_PLAYBACK_STATE) }
@@ -123,7 +125,9 @@ class MusicServiceConnection(val context: Context, serviceComponent: ComponentNa
                 PLAYER_EVENT_ISLOADING_CMD ->{
                     isLoading.postValue(extras?.getBoolean(PLAYER_EVENT_ISLOADING_PARAM))
                 }
-
+                PLAYER_EVENT_DELETE_SONG_CMD ->{
+                    deleteIndexSong.postValue(extras?.getInt(PLAYER_EVENT_DELETE_SONG_PARAM))
+                }
 
                 //NETWORK_FAILURE -> networkFailure.postValue(true)
             }

@@ -16,10 +16,9 @@ import com.mundocrativo.javier.solosonido.library.MediaHelper.QUEUE_NEW
 import com.mundocrativo.javier.solosonido.model.AudioMetadata
 import com.mundocrativo.javier.solosonido.model.VideoObj
 import com.mundocrativo.javier.solosonido.rep.AppRepository
-import com.mundocrativo.javier.solosonido.ui.historia.KIND_URL_PLAYLIST
-import com.mundocrativo.javier.solosonido.ui.historia.KIND_URL_VIDEO
-import com.mundocrativo.javier.solosonido.ui.historia.PRELOAD_INPROCESS
+import com.mundocrativo.javier.solosonido.ui.historia.*
 import com.mundocrativo.javier.solosonido.util.AppPreferences
+import com.mundocrativo.javier.solosonido.util.PreloadFile
 import com.mundocrativo.javier.solosonido.util.Util
 import com.soywiz.klock.DateTime
 import com.squareup.moshi.Moshi
@@ -45,6 +44,7 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
     val pageChangePager : MutableLiveData<Int> by lazy { MutableLiveData<Int>() }
     val showToastMessage : MutableLiveData<String> by lazy { MutableLiveData<String>() }
     val preloadProgress : MutableLiveData<Int> by lazy { MutableLiveData<Int>() }
+    private lateinit var jobPreload : Job
 
     suspend fun checkForServer(pref: AppPreferences):Boolean = withContext(Dispatchers.IO){
         if(!isServerChecked){
@@ -144,85 +144,77 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
     }
 
 
-    fun launchPlayerMultiple(queueCmd:Int,playVideoList:List<VideoObj>,pref:AppPreferences,msgPreload:String)= viewModelScope.launch(Dispatchers.IO){
+    fun launchPlayerMultiple(queueCmd:Int,playVideoList:List<VideoObj>,pref:AppPreferences,msgPreload:String){
+        if(this::jobPreload.isInitialized) jobPreload.cancel()
 
-        var queueCmdUpdate = queueCmd
-        //---crea la lista de videos final agregando los videos de la playlist
-        val finalVideoList = mutableListOf<VideoObj>()
-        playVideoList.forEach { video ->
-            when(Util.checkKindLink(video.url)){
-                KIND_URL_VIDEO -> finalVideoList.add(video)
-                KIND_URL_PLAYLIST -> finalVideoList.addAll(appRepository.getPlayListFromUrl(Util.transUrlToServePlaylist(video.url,pref)))
-            }
-        }
-
-        //--Ahora envía la lista al exoplayer
-        val audioList = ArrayList<AudioMetadata>()
-        finalVideoList.forEach {
-            var esVacio = true
-            if(it.title.isEmpty()){
-                //-- si no hay datos los intenta traer del cache
-                val metaCache = appRepository.getMetadataCache(it.url)
-                //Log.v("msg","No tengo datos, url=${it.url} cache=$metaCache")
-                if(metaCache!=null) {
-                    audioList.add(metaCache)
-                    esVacio = false
+        jobPreload = viewModelScope.launch(Dispatchers.IO){
+            var queueCmdUpdate = queueCmd
+            //---crea la lista de videos final agregando los videos de la playlist
+            val finalVideoList = mutableListOf<VideoObj>()
+            playVideoList.forEach { video ->
+                when(Util.checkKindLink(video.url)){
+                    KIND_URL_VIDEO -> finalVideoList.add(video)
+                    KIND_URL_PLAYLIST -> finalVideoList.addAll(appRepository.getPlayListFromUrl(Util.transUrlToServePlaylist(video.url,pref)))
                 }
             }
-            if(esVacio) {
-                audioList.add(
-                    AudioMetadata(
-                        it.url,
-                        it.title,
-                        it.channel,
-                        Util.createUrlConnectionStringPlay(pref.server, it.url, pref.hQ,pref.trans,false),
-                        it.thumbnailUrl,
-                        it.duration
-                    )
-                )
-            }
-        }
 
-        //--> Para hacer el preload
-        if((audioList.size>0) and (queueCmd==QUEUE_NEW)) {
-            var result = 0
-            val fullDuration = audioList[0].duration*1000
-            val url = audioList[0].mediaId
-            launch {
-                do{
-                    showToastMessage.postValue(msgPreload)
-                    result = appRepository.preloadSong(pref,url)
-                }while (result == PRELOAD_INPROCESS)
-            }
-
-            //--vamos a ver el avance de la conversion
-            var salida = false
-            do{
-                delay(100)
-                appRepository.getConvertedFiles(pref,Util.md5FileName(pref,url))?.let {conv->
-                    if(conv.conversion.size>0){
-                        val ms = conv.conversion[0].msconverted
-                        val percent = 100*ms/fullDuration
-                        preloadProgress.postValue((percent/1000L).toInt())
-                    }else{
-                        salida = true
+            //--Ahora envía la lista al exoplayer
+            val audioList = ArrayList<AudioMetadata>()
+            finalVideoList.forEach {
+                var esVacio = true
+                if(it.title.isEmpty()){
+                    //-- si no hay datos los intenta traer del cache
+                    val metaCache = appRepository.getMetadataCache(it.url)
+                    //Log.v("msg","No tengo datos, url=${it.url} cache=$metaCache")
+                    if(metaCache!=null) {
+                        audioList.add(metaCache)
+                        esVacio = false
                     }
                 }
-            }while (!salida)
-            preloadProgress.postValue(100)
+                if(esVacio) {
+                    audioList.add(
+                        AudioMetadata(
+                            it.url,
+                            it.title,
+                            it.channel,
+                            Util.createUrlConnectionStringPlay(pref.server, it.url, pref.hQ,pref.trans,false),
+                            it.thumbnailUrl,
+                            it.duration
+                        )
+                    )
+                }
+            }
+
+            //--- para hacer el preload
+            if((audioList.size>0) and (queueCmd==QUEUE_NEW)){
+                var result :Int? = null
+                val preloadFile = PreloadFile(pref,audioList[0].duration,appRepository)
+                launch {
+                    result = preloadFile.preload(audioList[0].mediaId)
+                }
+                preloadFile.checkProgress {
+                    preloadProgress.postValue(it)
+                }
+
+                if(result == PRELOAD_READY){
+                    showToastMessage.postValue(msgPreload)
+                    //---Tenemos el audio list con toda la metadata
+                    appRepository.putMetadataListCache(audioList)
+
+                    withContext(Dispatchers.Main){
+                        MediaHelper.cmdSendListToPlayer(queueCmd,0,audioList,musicServiceConnection)
+
+                        //--- para que cambie al player --> no vamos a abrir el player de manera forzada
+                        //if(!appRepository.getPlayerIsOpen()) pageChangePager.postValue(2) //--salta al player una vez envía todas las canciones
+                    }
+                }
+                else{
+                    showToastMessage.postValue("Error")
+                }
+
+            }
+
         }
-
-        //---Tenemos el audio list con toda la metadata
-        appRepository.putMetadataListCache(audioList)
-
-        withContext(Dispatchers.Main){
-            MediaHelper.cmdSendListToPlayer(queueCmd,0,audioList,musicServiceConnection)
-
-            //--- para que cambie al player --> no vamos a abrir el player de manera forzada
-            //if(!appRepository.getPlayerIsOpen()) pageChangePager.postValue(2) //--salta al player una vez envía todas las canciones
-        }
-
-
     }
 
     fun isVideolistInitialized() = this::videoLista.isInitialized

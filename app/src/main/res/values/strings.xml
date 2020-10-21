@@ -29,6 +29,7 @@
 
     //--- History Fragment
     <string name="msgPreload">Procesando</string>
+    <string name="msgPlaying">Reproducciendo</string>
 
     //---- Search Fragment
     <string name="searchtbhint">Buscar</string>

@@ -40,11 +40,12 @@ object OkGetFileUrl {
             .hostnameVerifier(TrustAllX509TrustManager.allowAllHostNames())
             .build()
 
+        try{
         val request = Request.Builder()
             .url(host)
             .build()
 
-        try{
+
 
             client.newCall(request).execute().use {
                     response ->

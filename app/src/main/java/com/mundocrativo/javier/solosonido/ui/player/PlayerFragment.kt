@@ -220,6 +220,15 @@ class PlayerFragment : Fragment() {
             viewModel.loadConvertedFiles(pref) //--- para pedir traer datos convertidos
         })
 
+        viewModel.deleteIndexSong.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
+            Log.v("msg","Force delete from error index:$it")
+            viewModel.deleteQueueItem(it,false)
+        })
+
+        viewModel.preloadProgress.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
+            progressPreload.progress = it
+        })
+
     }
 
     override fun onResume() {
@@ -378,7 +387,9 @@ class PlayerFragment : Fragment() {
                 is VideoPlayerListEvent.OnItemClick ->{
                     //--- Para hacer play directamente sobre este item
                     //Log.v("msg","Hice click en el Player Item")
-                    viewModel.playItemOnQueue(it.position,0L)
+                    //viewModel.playItemOnQueue(it.position,0L)
+                    viewModel.forcePreloadAndPlay(pref,it.position)
+
                     val itemSelected = it.item
                     itemSelected.esSelected = true
                     updateItem(it.position,itemSelected)
@@ -477,55 +488,6 @@ class PlayerFragment : Fragment() {
         }
     }
 
-    //---list1 es la lista pequena del player
-    //---list2 es la lista completa y es la base que hay que ver las diferencias
-    fun findDifferences(list1:List<VideoObj>,list2:List<VideoObj>){
-        if(list2.size>0){
-            val consecList = mutableListOf<Int>()
-            var index = 0
-            val tama1 = list1.size
-            var init1 = 0
-            var cant = 0
-            Log.v("msg","index tamanos list1=${list1.size} list2=${list2.size}")
-            do {
-                for (x in init1 until tama1) {
-                    index = list2.indexOfFirst { it.url.contentEquals(list1[x].url) }
-                    if (index >= 0) {
-                        init1 = x + 1
-                        break
-                    }
-                }
-                cant++
-                //Log.v("msg", "index cant:$cant  x=$init1 equal =$index")
-                consecList.add(index)
-            }while (cant<tama1)
-
-            //--- detecta el que hay que borrar
-            val itemsToDelete = mutableListOf<Int>()
-            if(consecList.size>0){
-                var ant = consecList[0]
-                consecList.forEach {
-                    val delta = it - ant
-                    if(delta>1) {
-                        //--- para borrar el it
-                        Log.v("msg","index to ---------> to delete ${ant+1}")
-                        itemsToDelete.add(ant+1)
-                    }
-                    ant = it
-                }
-            }
-
-            //--- borra si solo hay un item que borrar
-            if(itemsToDelete.size==1){
-                viewModel.deleteQueueItem(itemsToDelete[0],false)
-            }else{
-                if(itemsToDelete.size>1) Log.e("msg","Se detectaron muchos items para borrar - no se borra ninguno")
-            }
-
-        }
-
-    }
-
     fun checkActualQueueIndexWithPlayer(mediaId:String){
         if((viewModel.actualQueueIndex<viewModel.videoLista.size) and (viewModel.actualQueueIndex>-1)){
             //---vamos a chequear el url del nowplaying es igual al del indice del nowPlaying
@@ -551,9 +513,9 @@ class PlayerFragment : Fragment() {
                         indexMin = it
                     }
                 }
-                Log.v("msg","Setting index el valor mas cercano es index=$indexMin not setting")
-                //viewModel.actualQueueIndex = indexMin
-                //updateVideoListaEsPlaying(indexMin)
+                Log.v("msg","Setting index el valor mas cercano es index=$indexMin - setting true")
+                viewModel.actualQueueIndex = indexMin
+                updateVideoListaEsPlaying(indexMin)
             }
         }else{
             Log.e("msg","index , Outofbounds Actualqueueindex:${viewModel.actualQueueIndex} videolista.size=${viewModel.videoLista.size}")
