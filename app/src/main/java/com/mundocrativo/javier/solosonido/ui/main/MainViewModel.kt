@@ -14,6 +14,7 @@ import com.google.android.gms.cast.framework.CastContext
 import com.mundocrativo.javier.solosonido.library.MediaHelper
 import com.mundocrativo.javier.solosonido.library.MediaHelper.QUEUE_NEW
 import com.mundocrativo.javier.solosonido.model.AudioMetadata
+import com.mundocrativo.javier.solosonido.model.ProgressInfo
 import com.mundocrativo.javier.solosonido.model.VideoObj
 import com.mundocrativo.javier.solosonido.rep.AppRepository
 import com.mundocrativo.javier.solosonido.ui.historia.*
@@ -43,7 +44,7 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
     //--- observer para lanzar a otro tabfragment
     val pageChangePager : MutableLiveData<Int> by lazy { MutableLiveData<Int>() }
     val showToastMessage : MutableLiveData<String> by lazy { MutableLiveData<String>() }
-    val preloadProgress : MutableLiveData<Int> by lazy { MutableLiveData<Int>() }
+    val preloadProgress : MutableLiveData<ProgressInfo> by lazy { MutableLiveData<ProgressInfo>() }
     private lateinit var jobPreload : Job
 
     suspend fun checkForServer(pref: AppPreferences):Boolean = withContext(Dispatchers.IO){
@@ -192,6 +193,7 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
                 launch {
                     result = preloadFile.preload(audioList[0].mediaId)
                 }
+
                 preloadFile.checkProgress {
                     preloadProgress.postValue(it)
                 }
@@ -212,6 +214,16 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
                     showToastMessage.postValue("Error")
                 }
 
+
+
+            }else{
+                //---Tenemos el audio list con toda la metadata
+                appRepository.putMetadataListCache(audioList)
+
+                withContext(Dispatchers.Main){
+                    MediaHelper.cmdSendListToPlayer(queueCmd,0,audioList,musicServiceConnection)
+
+                }
             }
 
         }

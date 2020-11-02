@@ -146,7 +146,8 @@ class HistoriaFragment : Fragment() {
         })
 
         viewModel.preloadProgress.observe(viewLifecycleOwner, Observer {
-            preloadProgressBar.progress = it
+            preloadProgressBar.progress = it.progress
+            avanceTT.text = it.msg
         })
 
         //--- debe cargar los videos que están en la base de datos

@@ -2,6 +2,7 @@ package com.mundocrativo.javier.solosonido.util
 
 import android.util.Log
 import com.mundocrativo.javier.solosonido.library.MediaHelper
+import com.mundocrativo.javier.solosonido.model.ProgressInfo
 import com.mundocrativo.javier.solosonido.rep.AppRepository
 import com.mundocrativo.javier.solosonido.ui.historia.PRELOAD_ERROR
 import com.mundocrativo.javier.solosonido.ui.historia.PRELOAD_INPROCESS
@@ -20,26 +21,28 @@ class PreloadFile(private val pref:AppPreferences,private val fullDurationMs:Int
         return result
     }
 
-    suspend fun checkProgress(setProgres:(progres:Int)->Unit) = coroutineScope{
+    suspend fun checkProgress(setProgres:(progInfo:ProgressInfo)->Unit) = coroutineScope{
         var salida = false
-        var lastMs = 0L
-        var acumNoChange = 0
         do{
-            delay(500)
+            delay(1000)
             appRepository.getConvertedFiles(pref,Util.md5FileName(pref,url))?.let {conv->
                 if(conv.conversion.size>0){
                     val ms = conv.conversion[0].msconverted
-                    if(ms==lastMs) acumNoChange
-                    lastMs = ms
-                    if(acumNoChange>100) salida = true
-                    val percent = if(fullDurationMs!=0) 100*ms/(fullDurationMs*1000000) else 50
-                    setProgres(percent.toInt())
+                    val size = conv.conversion[0].sizeconverted
+                    if(size == 0L){
+                        val percent = if(fullDurationMs!=0) ms/(fullDurationMs*10000) else 50
+                        setProgres(ProgressInfo(percent.toInt(),"  "+percent.toInt()+"%"))
+                    }
+                    else{
+                        val percent = ((size.toInt() / 1048576) % 100 ) //-- avanza cada mega
+                        setProgres(ProgressInfo(percent,Util.readableFileSize(size.toInt())))
+                    }
                 }else{
                     salida = true
                 }
             }
         }while (!salida)
-        setProgres(100)
+        setProgres(ProgressInfo(100,"Finish"))
     }
 
 }

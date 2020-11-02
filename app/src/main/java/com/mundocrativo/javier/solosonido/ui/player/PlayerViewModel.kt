@@ -42,7 +42,7 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
     val converted : MutableLiveData<Converted> by lazy { MutableLiveData<Converted>() }
     val isLoading = musicServiceConnection.isLoading
     val deleteIndexSong = musicServiceConnection.deleteIndexSong
-    val preloadProgress : MutableLiveData<Int> by lazy { MutableLiveData<Int>() }
+    val preloadProgress : MutableLiveData<ProgressInfo> by lazy { MutableLiveData<ProgressInfo>() }
     private lateinit var jobPreload : Job
 
 

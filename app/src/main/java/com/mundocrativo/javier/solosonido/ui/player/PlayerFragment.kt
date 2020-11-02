@@ -226,7 +226,8 @@ class PlayerFragment : Fragment() {
         })
 
         viewModel.preloadProgress.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
-            progressPreload.progress = it
+            progressPreload.progress = it.progress
+            progressText.text = it.msg
         })
 
     }

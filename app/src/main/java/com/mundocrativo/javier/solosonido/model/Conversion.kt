@@ -5,7 +5,8 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 data class Conversion(
     val file : String,
-    val msconverted: Long
+    val msconverted: Long,
+    val sizeconverted: Long
 )
 
 @JsonClass(generateAdapter = true)
