@@ -45,6 +45,7 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
     val pageChangePager : MutableLiveData<Int> by lazy { MutableLiveData<Int>() }
     val showToastMessage : MutableLiveData<String> by lazy { MutableLiveData<String>() }
     val preloadProgress : MutableLiveData<ProgressInfo> by lazy { MutableLiveData<ProgressInfo>() }
+    val download : MutableLiveData<VideoObj> by lazy { MutableLiveData<VideoObj>() }
     private lateinit var jobPreload : Job
 
     suspend fun checkForServer(pref: AppPreferences):Boolean = withContext(Dispatchers.IO){
@@ -228,6 +229,32 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
 
         }
     }
+
+    fun convToMp3(playVideoList:List<VideoObj>,pref:AppPreferences)= viewModelScope.launch(Dispatchers.IO){
+
+        //---crea la lista de videos final agregando los videos de la playlist
+        val finalVideoList = mutableListOf<VideoObj>()
+        playVideoList.forEach { video ->
+            when(Util.checkKindLink(video.url)){
+                KIND_URL_VIDEO -> finalVideoList.add(video)
+                KIND_URL_PLAYLIST -> finalVideoList.addAll(appRepository.getPlayListFromUrl(Util.transUrlToServePlaylist(video.url,pref)))
+            }
+        }
+
+        finalVideoList.forEach {
+            val mp3Conversion = PreloadFile(pref,it.duration,appRepository)
+            launch {
+                mp3Conversion.loadMp3(it.url)
+            }
+
+            mp3Conversion.checkProgress {
+                preloadProgress.postValue(it)
+            }
+
+            if(mp3Conversion.resultFileExists) download.postValue(it) //--- para hacer la solicitud de descarga
+        }
+    }
+
 
     fun isVideolistInitialized() = this::videoLista.isInitialized
 

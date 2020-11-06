@@ -1,19 +1,23 @@
 package com.mundocrativo.javier.solosonido.ui.historia
 
+import android.Manifest
+import android.app.DownloadManager
 import android.content.ClipDescription.MIMETYPE_TEXT_PLAIN
 import android.content.ClipboardManager
 import android.content.Context
-import android.content.DialogInterface
-import android.content.Intent
-import android.media.AudioAttributes
-import android.media.MediaPlayer
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.os.Environment.DIRECTORY_MUSIC
+import android.provider.MediaStore
 import android.util.Log
 import android.view.*
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
@@ -28,6 +32,7 @@ import com.mundocrativo.javier.solosonido.library.MediaHelper
 import com.mundocrativo.javier.solosonido.model.VideoObj
 import com.mundocrativo.javier.solosonido.ui.config.ConfigActivity
 import com.mundocrativo.javier.solosonido.ui.main.*
+import com.mundocrativo.javier.solosonido.ui.selection.*
 import com.mundocrativo.javier.solosonido.util.AppPreferences
 import com.mundocrativo.javier.solosonido.util.Util
 import com.soywiz.klock.DateTime
@@ -40,6 +45,7 @@ import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
+import java.io.File
 
 class HistoriaFragment : Fragment() {
 
@@ -53,6 +59,8 @@ class HistoriaFragment : Fragment() {
     private lateinit var videoListDataAdapter: VideoListDataAdapter
     private lateinit var videoPairApi : VideoPairApi
     private lateinit var imageLoader : ImageLoader
+    private val downloadMannager by lazy { context!!.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager }
+    private var pendingDownloads = 0
 
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
@@ -64,7 +72,8 @@ class HistoriaFragment : Fragment() {
         }
 
         view.playIv.setOnClickListener {
-            dialogPlayMultiple(viewModel.videoLista.filter { it.esSelected })
+            //dialogPlayMultiple(viewModel.videoLista.filter { it.esSelected })
+            createSelectionDialog(viewModel.videoLista.filter { it.esSelected })
         }
 
         view.deleteIv.setOnClickListener {
@@ -150,6 +159,10 @@ class HistoriaFragment : Fragment() {
             avanceTT.text = it.msg
         })
 
+        viewModel.download.observe(viewLifecycleOwner, Observer {
+            createDownloadMannagerRequest(it)
+        })
+
         //--- debe cargar los videos que están en la base de datos
         viewModel.loadVideosFromDb()
         setupRecyclerFlow()
@@ -158,12 +171,15 @@ class HistoriaFragment : Fragment() {
     override fun onResume() {
         super.onResume()
 
+        checkRightsForSDAccess()
+
         //--- para checkear de nuevo los servidores
         if(!viewModel.isServerChecked){
             viewModel.loadVideosFromDb()
         }
 
         showButtons()
+        showDescargas()
     }
 
     override fun onPause() {
@@ -249,7 +265,8 @@ class HistoriaFragment : Fragment() {
                         val itemSelected = it.item
                         itemSelected.esSelected = true
                         updateItem(it.position,itemSelected)
-                        dialogPlayMultiple(mutableListOf(itemSelected))
+                        //dialogPlayMultiple(mutableListOf(itemSelected))
+                        createSelectionDialog(mutableListOf(itemSelected))
                         MainScope().launch {
                             delay(100)
                             itemSelected.esSelected = false
@@ -354,19 +371,38 @@ class HistoriaFragment : Fragment() {
         dialog.show()
     }
 
-    fun dialogPlayMultiple(videoListToPlay:List<VideoObj>){
-        //val videoListToPlay = viewModel.videoLista.filter { it.esSelected }
-        val msg = getString(R.string.msgPlaying)
-        val builder = AlertDialog.Builder(context!!)
-            .setTitle(getString(R.string.titlequeue))
-            .setMessage(getString(R.string.messageQueue))
-            .setPositiveButton(getString(R.string.queueAdd)) { p0, p1 -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_ADD,videoListToPlay,pref,msg) }
-            .setNegativeButton(getString(R.string.queueNew)) { p0, p1 -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_NEW,videoListToPlay,pref,msg) }
-            .setNeutralButton(getString(R.string.queueNext)) { p0, p1 -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_NEXT,videoListToPlay,pref,msg) }
+//    fun dialogPlayMultiple(videoListToPlay:List<VideoObj>){
+//        //val videoListToPlay = viewModel.videoLista.filter { it.esSelected }
+//        val msg = getString(R.string.msgPlaying)
+//        val builder = AlertDialog.Builder(context!!)
+//            .setTitle(getString(R.string.titlequeue))
+//            .setMessage(getString(R.string.messageQueue))
+//            .setPositiveButton(getString(R.string.queueAdd)) { p0, p1 -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_ADD,videoListToPlay,pref,msg) }
+//            .setNegativeButton(getString(R.string.queueNew)) { p0, p1 -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_NEW,videoListToPlay,pref,msg) }
+//            .setNeutralButton(getString(R.string.queueNext)) { p0, p1 -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_NEXT,videoListToPlay,pref,msg) }
+//
+//        val dialog =builder.create()
+//        dialog.show()
+//    }
 
-        val dialog =builder.create()
-        dialog.show()
+    fun createSelectionDialog(videoListToPlay:List<VideoObj>){
+
+        val msg = getString(R.string.msgPlaying)
+        val ft = childFragmentManager.beginTransaction()
+        val prev = childFragmentManager.findFragmentByTag("selection")
+        if(prev!=null) ft.remove(prev)
+        val dialogFragment = SelectionDialogFragment(){
+            when(it){
+                SEL_END -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_ADD,videoListToPlay,pref,msg)
+                SEL_NEW -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_NEW,videoListToPlay,pref,msg)
+                SEL_NEXT -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_NEXT,videoListToPlay,pref,msg)
+                SEL_DOWNLOAD -> viewModel.convToMp3(videoListToPlay,pref)
+            }
+
+        }.apply { show(ft,"selection") }
+
     }
+
 
     fun deselectList(){
         if(viewModel.isVideolistInitialized()){
@@ -391,6 +427,98 @@ class HistoriaFragment : Fragment() {
         val toast = Toast.makeText(context,mensaje,Toast.LENGTH_LONG)
         toast.setGravity(Gravity.CENTER,0,0)
         toast.show()
+    }
+
+    fun createDownloadMannagerRequest(song:VideoObj){
+        val url = song.url
+        Log.v("msg","Download url=$")
+        val urlPath = Util.createMp3DownloadLink(pref,url)
+        Log.v("msg","path:->$urlPath")
+
+        //val filePath = "file://" + getMusicPath() + File.separator + Util.md5Mp3Filename(url)
+        val filePath = "file://" + getMusicPath() + File.separator + song.title.slice(0 until if(song.title.length>30) 30 else song.title.length) +".mp3"
+
+        Log.v("msg","FilePath:->$filePath")
+
+        val downLoadReq = DownloadManager.Request(Uri.parse(urlPath))
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
+            .setDestinationUri(Uri.parse(filePath))
+            .setRequiresCharging(false)
+            .setAllowedOverMetered(true)
+            .setAllowedOverRoaming(false)
+
+        val downId = downloadMannager.enqueue(downLoadReq)
+        pendingDownloads++
+        val checkDownloads = lifecycleScope.launch {
+
+            while(!isDownloadFinish(downId)){
+                delay(1000)
+                showDescargas()
+            }
+            pendingDownloads--
+            showDescargas()
+        }
+
+    }
+
+    fun getMusicPath():String{
+//        return if(Build.VERSION.SDK_INT >28){
+//            Log.v("msg","api 29>=")
+//            MediaStore.Audio.Media.getContentUri()
+//        }else{
+//            Log.v("msg","api 28<")
+//            Environment.getExternalStoragePublicDirectory(DIRECTORY_MUSIC).path
+//        }
+        return Environment.getExternalStoragePublicDirectory(DIRECTORY_MUSIC).path
+    }
+
+
+    fun isDownloadFinish(id:Long):Boolean{
+        val cursor = downloadMannager.query(DownloadManager.Query().setFilterById(id))
+        if(cursor.moveToFirst()){
+            val status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
+            when(status){
+                DownloadManager.STATUS_FAILED ->{
+                    val reason = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_REASON))
+                    Log.v("msg","Download failed - reason:$reason")
+                }
+                DownloadManager.STATUS_PAUSED ->{
+                    //Log.v("msg","Download paused")
+                }
+                DownloadManager.STATUS_PENDING ->{
+                    //Log.v("msg","Download pending")
+                }
+                DownloadManager.STATUS_RUNNING ->{
+                    //Log.v("msg","Download running")
+                }
+                DownloadManager.STATUS_SUCCESSFUL ->{
+                    //Log.v("msg","Download complete")
+                }
+            }
+            return ((status==DownloadManager.STATUS_SUCCESSFUL) or (status==DownloadManager.STATUS_FAILED))
+        }
+        return true
+    }
+
+
+    fun checkRightsForSDAccess(){
+        Log.v("Security:", "Chequeando permisos")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (context!!.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                Log.v("MSG:", "**********No tiene permiso")
+                ActivityCompat.requestPermissions(
+                    activity!!,
+                    arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                    0
+                )
+            } else {
+                Log.v("Security:", "Si tiene permisos")
+            }
+        }
+    }
+
+    fun showDescargas(){
+        descargasTt.text = pendingDownloads.toString()+" "
     }
 
 }

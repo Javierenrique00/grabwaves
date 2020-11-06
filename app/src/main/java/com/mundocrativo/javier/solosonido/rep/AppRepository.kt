@@ -262,6 +262,18 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
         return PRELOAD_READY
     }
 
+    fun askForMp3Conversion(ruta:String):Int{
+        directCache.conexionServer(ruta)?.let { resultado ->
+            return when(resultado){
+                "ready" -> PRELOAD_READY
+                "inprocess" -> PRELOAD_INPROCESS
+                "error" -> PRELOAD_ERROR
+                else -> PRELOAD_ERROR
+            }
+
+        }
+        return PRELOAD_ERROR
+    }
 
 }
 

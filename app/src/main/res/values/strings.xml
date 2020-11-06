@@ -35,6 +35,7 @@
     <string name="searchtbhint">Buscar</string>
 
     //--- add item Cola messages
+    <string name="queueAdd">Agregar al final</string>
     <string name="queueNext">Agregar siguiente</string>
     <string name="queueNew">Crear nueva lista</string>
     <string name="titlequeue">Reproducir medio</string>
@@ -48,7 +49,7 @@
     <!-- Error messages -->
     <string name="error_media_not_found">No se encuentra el medio de reproducción.</string>
     <string name="generic_error">La applicación encontró un error inesperado.</string>
-    <string name="queueAdd">Agregar al final</string>
+
 
     //--- dialog delete confirmation
     <string name="DeleteTitle">Eliminar</string>
@@ -61,5 +62,10 @@
     <string name="swTextLq">Min calidad</string>
     <string name="swTextTransFalse">Original</string>
     <string name="swTextTransTrue">Transcodificación</string>
+
+    //--- Selection Dialog Fragment
+    <string name="selectionTitle">Que quiere hacer con la selección:</string>
+    <string name="downloadSelecction">Descargar</string>
+    <string name="cancelSelecction">Cancel</string>
 
 </resources>

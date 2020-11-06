@@ -136,6 +136,21 @@ object Util {
         return pref.server + "/converted" + hasFile
     }
 
+    fun createMp3Link(pref: AppPreferences,url:String):String{
+        return pref.server + "/tomp3?link=" + convStringToBase64(url)
+    }
+
+    fun createDownloadLink(pref:AppPreferences,url:String):String{
+        val file = md5FileName(pref,url)
+        val hasFile = "?file=$file"
+        return pref.server + "/download" + hasFile
+    }
+
+    fun createMp3DownloadLink(pref: AppPreferences,url: String):String{
+        return pref.server + "/download?file=" + md5Mp3Filename(url)
+    }
+
+
     fun createUrlFromVideoId(videoId:String):String{
         return "https://www.youtube.com/watch?v=$videoId"
     }
@@ -195,6 +210,10 @@ object Util {
         val quality = if(pref.hQ) "hq" else "lq"
         val transcode = if(pref.trans) "t" else "f"
         return hexMd5Checksum(name)+"$quality$transcode.opus"
+    }
+
+    fun md5Mp3Filename(name: String):String{
+        return hexMd5Checksum(name)+".mp3"
     }
 
 
