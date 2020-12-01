@@ -24,7 +24,9 @@ class DirectCache(val cacheStrDao: CacheStrDao) {
                 return dato.cacheData!!
             }else{
                 //-- no está en room, hay que traerlo de la nube
+                //Log.v("msg","Buscando okhttp:$url")
                 val resultado = OkGetFileUrl.traeWebString(url)
+                //Log.v("msg","Resultado:$resultado")
                 if(resultado!=null){
                     cacheInfoUrl.put(hashUrl,resultado)
                     cacheStrDao.insert(CacheStr(

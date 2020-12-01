@@ -74,11 +74,12 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
     }
 
     fun getUrlInfo(position:Int,videoIn:VideoObj,pref: AppPreferences,msgError:String):Pair<Int,VideoObj>{
-        //Log.v("msg","trayendo info ${videoIn.url} KindMedia:${videoIn.kindMedia}")
+        Log.v("msg","trayendo info ${videoIn.url} KindMedia:${videoIn.kindMedia}")
         when(videoIn.kindMedia){
             KIND_URL_VIDEO ->{
                 val ruta = Util.transUrlToServInfo(videoIn.url,pref)
                 val info = appRepository.getInfoFromUrl(ruta)
+                //Log.v("msg","Info-----------$info")
                 info?.let {
                     return Pair(position,VideoObj(
                         videoIn.id,
@@ -104,6 +105,7 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
             }
             KIND_URL_PLAYLIST ->{
                 val ruta = Util.transUrlToServePlaylist(videoIn.url,pref)
+                Log.v("msg","get Playlist:$ruta")
                 return Pair(position,appRepository.getPlayListFromUrl(videoIn,ruta,msgError))
             }
         }

@@ -204,6 +204,7 @@ class HistoriaFragment : Fragment() {
             enlaceLetras = item.text.toString()
         }
         if(!enlaceLetras.isEmpty()) {
+            viewModel.showToastMessage.postValue(enlaceLetras)
             insertItemAtTopList(Pair(MediaHelper.QUEUE_NO_PLAY,enlaceLetras))
             videoRv.smoothScrollToPosition(0)
         }
