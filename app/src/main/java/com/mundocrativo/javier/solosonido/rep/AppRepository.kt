@@ -99,13 +99,13 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
     private fun convertSearhToVideoList(searchObj: SearchObj):List<VideoObj>{
         val resultList = mutableListOf<VideoObj>()
 
-        searchObj.items.forEach {
+        searchObj.items.filter { (!it.isLive) and (!it.isUpcoming) }.forEach {
             resultList.add(VideoObj(
                 0,
-                it.link?:"",
+                it.url?:"",
                 it.title?:"",
                 it.author?.name?:"",
-                it.thumbnail,
+                chooseSmallThumbnail(it.thumbnails),
                 0,
                 0,
                 0,
@@ -122,6 +122,19 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
             ))
         }
         return  resultList
+    }
+
+    private fun chooseSmallThumbnail(lista:List<MiniaturasList>):String {
+        var minTama = Int.MAX_VALUE
+        var selUrl = ""
+        lista.forEach {
+            val tama = it.width?:100000 * (it.height?:100000)
+            if(tama<minTama) {
+                selUrl = it.url?:""
+                minTama = tama
+            }
+        }
+        return selUrl
     }
 
     fun getPlayListFromUrl(video:VideoObj,url:String,msgError:String):VideoObj{
