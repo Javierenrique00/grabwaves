@@ -4,10 +4,12 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.view.Gravity
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -34,13 +36,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.sample
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
+import java.io.IOException
+import java.net.SocketTimeoutException
 
 class SearchFragment : Fragment() {
 
@@ -106,12 +107,30 @@ class SearchFragment : Fragment() {
         pref = AppPreferences(context!!)
 
         searchTextApi = SearchTextApi()
-        val searchTextFlow = flowFromString(searchTextApi).debounce(1000) //--sample
+        val searchTextFlow = flowFromString(searchTextApi).buffer(Channel.UNLIMITED).debounce(500).retry(3){ cause ->
+            if (cause is IOException) {
+                viewModel.showToastMessage.postValue(getString(R.string.msgRetryIOException))
+                Log.e("msg","Exepcion - DELAY/2000")
+                delay(2000)
+                return@retry true
+            } else {
+                return@retry false
+            }
+        }.map { value ->
+            viewModel.getSearchData(createUrlConnectionStringSearch(pref.server,value,50)) }
 
-        lifecycleScope.launch {
-            searchTextFlow.collect{ value ->
-                //Log.v("msg","ValorString = $value")
-                if(value.length>2) viewModel.getSearchData(createUrlConnectionStringSearch(pref.server,value,50))
+//        lifecycleScope.launch {
+//            searchTextFlow.collect{ value ->
+//                //Log.v("msg","ValorString = $value")
+//                if(value.length>2) viewModel.getSearchData(createUrlConnectionStringSearch(pref.server,value,50))
+//            }
+//        }
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            searchTextFlow.collect{ lista ->
+                Log.v("msg","ListaSize = ${lista.size}")
+                viewModel.videoLista = lista.toMutableList()
+                viewModel.videoListLiveData.postValue(lista)
             }
         }
 
@@ -123,6 +142,10 @@ class SearchFragment : Fragment() {
         })
 
         imageLoader = Coil.imageLoader(context!!)
+
+        viewModel.showToastMessage.observe(viewLifecycleOwner, Observer {
+            sendToast(it)
+        })
     }
 
     val tw = object : TextWatcher {
@@ -239,6 +262,12 @@ class SearchFragment : Fragment() {
         })
 
 
+    }
+
+    fun sendToast(mensaje:String){
+        val toast = Toast.makeText(context,mensaje, Toast.LENGTH_LONG)
+        toast.setGravity(Gravity.CENTER,0,0)
+        toast.show()
     }
 
     fun dialogItemCola(item:VideoObj){

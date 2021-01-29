@@ -5,6 +5,7 @@ import com.mundocrativo.javier.solosonido.model.CacheStr
 import com.mundocrativo.javier.solosonido.util.OkGetFileUrl
 import com.mundocrativo.javier.solosonido.util.Util
 import com.soywiz.klock.DateTime
+import java.io.IOException
 
 class DirectCache(val cacheStrDao: CacheStrDao) {
 
@@ -37,6 +38,7 @@ class DirectCache(val cacheStrDao: CacheStrDao) {
                     return resultado
                 }
                 else{
+                    throw IOException("Trow IOException/to retry")
                     return null
                 }
             }

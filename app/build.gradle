@@ -11,8 +11,8 @@ android {
         applicationId "com.mundocrativo.javier.solosonido"
         minSdkVersion 24
         targetSdkVersion 29
-        versionCode 38
-        versionName "3.8"
+        versionCode 39
+        versionName "3.9"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -80,7 +80,7 @@ dependencies {
     kapt 'com.squareup.moshi:moshi-kotlin-codegen:1.10.0'
 
     //--- para cargar las imagenes con Coil
-    implementation "io.coil-kt:coil:0.13.0"
+    implementation 'io.coil-kt:coil:1.1.1'
 
     //--- para usar retrofit con OKhttp y moshi
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'

@@ -9,6 +9,8 @@ import com.mundocrativo.javier.solosonido.model.VideoObj
 import com.mundocrativo.javier.solosonido.rep.AppRepository
 import com.squareup.moshi.internal.Util
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 class SearchViewModel(val appRepository: AppRepository) : ViewModel(){
@@ -16,15 +18,26 @@ class SearchViewModel(val appRepository: AppRepository) : ViewModel(){
     val videoListLiveData : MutableLiveData<List<VideoObj>> by lazy { MutableLiveData<List<VideoObj>>() }
     lateinit var videoLista : MutableList<VideoObj>
     val recVideoList = mutableListOf<List<VideoObj>>()
+    val showToastMessage : MutableLiveData<String> by lazy { MutableLiveData<String>() }
 
 
-    fun getSearchData(searchURL:String)=viewModelScope.launch(Dispatchers.IO){
-        //Log.v("msg","Search URL: $searchURL")
-        val data = appRepository.getSearchFromUrl(searchURL)
+//    fun getSearchData(searchURL:String)=viewModelScope.launch(Dispatchers.IO){
+//        //Log.v("msg","Search URL: $searchURL")
+//        val data = appRepository.getSearchFromUrl(searchURL)
+//        //Log.v("msg","Resultados.size=${data.size}")
+//        videoLista = data.toMutableList()
+//        videoListLiveData.postValue(videoLista)
+//    }
+
+    suspend fun getSearchData(searchURL:String):List<VideoObj> = coroutineScope {
+        Log.v("msg","Search URL: $searchURL")
+        val listaEsp = async<List<VideoObj>> {
+            appRepository.getSearchFromUrl(searchURL)
+        }
         //Log.v("msg","Resultados.size=${data.size}")
-        videoLista = data.toMutableList()
-        videoListLiveData.postValue(videoLista)
+        listaEsp.await()
     }
+
 
     fun openVideoItem(queueCmd:Int,item:VideoObj){
         //appRepository.openVideoUrl(queueCmd, url)

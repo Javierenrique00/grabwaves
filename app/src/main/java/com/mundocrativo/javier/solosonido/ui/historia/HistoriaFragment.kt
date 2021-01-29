@@ -41,11 +41,10 @@ import kotlinx.android.synthetic.main.historia_fragment.view.*
 import kotlinx.android.synthetic.main.main_fragment.view.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import java.io.File
+import java.io.IOException
 
 class HistoriaFragment : Fragment() {
 
@@ -213,7 +212,16 @@ class HistoriaFragment : Fragment() {
     private fun setupRecyclerFlow(){
         //---inicia los eventos del flow del video
         videoPairApi = VideoPairApi()
-        val flujoVideo = flowFromVideoPair(videoPairApi).buffer(Channel.UNLIMITED).map { viewModel.getUrlInfo(it.first,it.second,pref,getString(R.string.msgPlayListError)) }
+        val flujoVideo = flowFromVideoPair(videoPairApi).buffer(Channel.UNLIMITED).map { viewModel.getUrlInfo(it.first,it.second,pref,getString(R.string.msgPlayListError)) }.retry(3){ cause ->
+            if (cause is IOException) {
+                viewModel.showToastMessage.postValue(getString(R.string.msgRetryIOException))
+                Log.e("msg","Exepcion - DELAY/2000")
+                delay(2000)
+                return@retry true
+            } else {
+                return@retry false
+            }
+        }
 
         //--- Se quita el GLobalScope
         lifecycleScope.launch(Dispatchers.IO) {
