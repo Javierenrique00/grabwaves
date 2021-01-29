@@ -93,7 +93,7 @@ class HistoriaFragment : Fragment() {
         //viewModel = ViewModelProviders.of(this).get(MainViewModel::class.java)
 
         pref = AppPreferences(context!!)
-        imageLoader = Coil.imageLoader(context!!)
+        imageLoader = viewModel.imageLoader
 
         //--- videoRecyclerView
         setupVideoListRecyclerAdapter()

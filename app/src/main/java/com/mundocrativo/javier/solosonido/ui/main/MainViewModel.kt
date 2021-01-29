@@ -27,6 +27,7 @@ import kotlinx.coroutines.*
 
 class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
 
+    val imageLoader = appRepository.getAppCoilImageLoader()
     //var enlaceExternal :String? = null
     val musicServiceConnection = appRepository.musicServiceConnection
     val openVideoUrlLiveData = appRepository.openVideoUrlLiveData

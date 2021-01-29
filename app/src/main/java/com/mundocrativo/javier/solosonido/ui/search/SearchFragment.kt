@@ -141,7 +141,7 @@ class SearchFragment : Fragment() {
             showBackBtState()
         })
 
-        imageLoader = Coil.imageLoader(context!!)
+        imageLoader = viewModel.imageLoader
 
         viewModel.showToastMessage.observe(viewLifecycleOwner, Observer {
             sendToast(it)

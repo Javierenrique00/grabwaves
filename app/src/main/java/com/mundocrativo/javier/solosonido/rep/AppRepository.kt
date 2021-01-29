@@ -2,6 +2,7 @@ package com.mundocrativo.javier.solosonido.rep
 
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
+import coil.ImageLoader
 import com.mundocrativo.javier.solosonido.com.DirectCache
 import com.mundocrativo.javier.solosonido.com.MetadataCache
 import com.mundocrativo.javier.solosonido.db.QueueDao
@@ -16,7 +17,7 @@ import com.squareup.moshi.Moshi
 import java.lang.Exception
 
 
-class AppRepository(private val videoDao: VideoDao,private val directCache: DirectCache,val musicServiceConnection: MusicServiceConnection,private val queueDao: QueueDao,private val queueFieldDao: QueueFieldDao,private val metadataCache: MetadataCache) {
+class AppRepository(private val videoDao: VideoDao,private val directCache: DirectCache,val musicServiceConnection: MusicServiceConnection,private val queueDao: QueueDao,private val queueFieldDao: QueueFieldDao,private val metadataCache: MetadataCache,private val coilImageLoader:ImageLoader) {
     val moshi = Moshi.Builder().build()
     val infoAdapter = moshi.adapter(InfoObj::class.java)
     val searchAdapter = moshi.adapter(SearchObj::class.java)
@@ -36,6 +37,10 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
             return false
         }
         return false
+    }
+
+    fun getAppCoilImageLoader():ImageLoader{
+        return coilImageLoader
     }
 
 

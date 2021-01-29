@@ -107,7 +107,7 @@ class PlayerFragment : Fragment() {
         setupRecyclerFlow()
 
         setupVideoPlayerRecyclerAdapter()
-        imageLoader = Coil.imageLoader(context!!)
+        imageLoader = viewModel.imageLoader
 
         //--- este es la posición relativa a la cola que se trae
         viewModel.playBackState.observe(viewLifecycleOwner, androidx.lifecycle.Observer {

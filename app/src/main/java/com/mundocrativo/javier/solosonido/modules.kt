@@ -3,6 +3,8 @@ package com.mundocrativo.javier.solosonido
 import android.app.Application
 import android.content.ComponentName
 import androidx.room.Room
+import coil.Coil
+import coil.ImageLoader
 import com.mundocrativo.javier.solosonido.base.GeneralCache
 import com.mundocrativo.javier.solosonido.com.CacheMetaDao
 import com.mundocrativo.javier.solosonido.com.CacheStrDao
@@ -107,11 +109,20 @@ val appModule = module {
     single { provideMusicServiceConnection(get()) }
 
 
-    fun provideAppRepository(videoDao: VideoDao,directCache: DirectCache,musicServiceConnection: MusicServiceConnection,queueDao: QueueDao,queueFieldDao: QueueFieldDao,metaCache:MetadataCache):AppRepository {
-        return AppRepository(videoDao,directCache,musicServiceConnection,queueDao,queueFieldDao,metaCache)
+    fun provideCoilImageLoader(application: Application):ImageLoader{
+        return ImageLoader.Builder(application.baseContext)
+            .availableMemoryPercentage(0.25)
+            .crossfade(true)
+            .build()
     }
 
-    single { provideAppRepository(get(),get(),get(),get(),get(),get()) }
+    single { provideCoilImageLoader(get()) }
+
+    fun provideAppRepository(videoDao: VideoDao,directCache: DirectCache,musicServiceConnection: MusicServiceConnection,queueDao: QueueDao,queueFieldDao: QueueFieldDao,metaCache:MetadataCache,coilImageLoader:ImageLoader):AppRepository {
+        return AppRepository(videoDao,directCache,musicServiceConnection,queueDao,queueFieldDao,metaCache,coilImageLoader)
+    }
+
+    single { provideAppRepository(get(),get(),get(),get(),get(),get(),get()) }
 
 }
 

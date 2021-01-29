@@ -28,6 +28,7 @@ import org.koin.ext.scope
 
 class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
 
+    val imageLoader = appRepository.getAppCoilImageLoader()
     val musicServiceConnection = appRepository.musicServiceConnection
 //    val queueLiveData = musicServiceConnection.queueLiveData
 //    val nowPlaying = appRepository.musicServiceConnection.nowPlaying

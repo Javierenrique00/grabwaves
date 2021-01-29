@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 
 class SearchViewModel(val appRepository: AppRepository) : ViewModel(){
 
+    val imageLoader = appRepository.getAppCoilImageLoader()
     val videoListLiveData : MutableLiveData<List<VideoObj>> by lazy { MutableLiveData<List<VideoObj>>() }
     lateinit var videoLista : MutableList<VideoObj>
     val recVideoList = mutableListOf<List<VideoObj>>()
