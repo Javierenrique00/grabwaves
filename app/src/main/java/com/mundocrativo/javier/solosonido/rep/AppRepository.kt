@@ -7,6 +7,7 @@ import com.mundocrativo.javier.solosonido.com.DirectCache
 import com.mundocrativo.javier.solosonido.com.MetadataCache
 import com.mundocrativo.javier.solosonido.db.QueueDao
 import com.mundocrativo.javier.solosonido.db.QueueFieldDao
+import com.mundocrativo.javier.solosonido.db.SearchItemDao
 import com.mundocrativo.javier.solosonido.db.VideoDao
 import com.mundocrativo.javier.solosonido.model.*
 import com.mundocrativo.javier.solosonido.service.MusicServiceConnection
@@ -17,7 +18,7 @@ import com.squareup.moshi.Moshi
 import java.lang.Exception
 
 
-class AppRepository(private val videoDao: VideoDao,private val directCache: DirectCache,val musicServiceConnection: MusicServiceConnection,private val queueDao: QueueDao,private val queueFieldDao: QueueFieldDao,private val metadataCache: MetadataCache,private val coilImageLoader:ImageLoader) {
+class AppRepository(private val videoDao: VideoDao,private val directCache: DirectCache,val musicServiceConnection: MusicServiceConnection,private val queueDao: QueueDao,private val queueFieldDao: QueueFieldDao,private  val searchItemDao: SearchItemDao,private val metadataCache: MetadataCache,private val coilImageLoader:ImageLoader) {
     val moshi = Moshi.Builder().build()
     val infoAdapter = moshi.adapter(InfoObj::class.java)
     val searchAdapter = moshi.adapter(SearchObj::class.java)
@@ -306,6 +307,27 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
         return PRELOAD_ERROR
     }
 
+    fun insertSearchItemDB(inputValue:String){
+        val insertValue = inputValue.toLowerCase()
+        val results = searchItemDao.buscarExact(insertValue)
+        if(results.isEmpty()){
+            searchItemDao.insert(SearchItem(0,insertValue))
+        }
+    }
+
+    fun listSearchDB(inputValue: String):List<SearchItem>{
+        return searchItemDao.buscar(inputValue)
+    }
+
+    fun purgarSearchDB(){
+        val listaCompleta = searchItemDao.listaTodos()
+        if(listaCompleta.size> MAX_SEARCH_LIST_SIZE){
+            val qToDelete = listaCompleta.size - MAX_SEARCH_LIST_SIZE
+            listaCompleta.take(qToDelete).map { searchItemDao.delete(it) }
+        }
+    }
+
 }
 
 const val DEFAULT_QUEUE_NAME = "default"
+const val MAX_SEARCH_LIST_SIZE = 100

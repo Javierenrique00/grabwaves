@@ -12,7 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 //----  https://android.jlelse.eu/painless-android-testing-with-room-koin-bb949eefcbee
 //--- para usar Koin con la base de datos
 
-@Database(entities = [VideoObj::class,CacheStr::class,QueueObj::class,QueueField::class,CacheMetaStr::class],version = 11)
+@Database(entities = [VideoObj::class,CacheStr::class,QueueObj::class,QueueField::class,CacheMetaStr::class,SearchItem::class],version = 13)
 abstract class DataDatabase : RoomDatabase() {
 
     abstract val videoDao : VideoDao
@@ -20,5 +20,6 @@ abstract class DataDatabase : RoomDatabase() {
     abstract val queueDao : QueueDao
     abstract val queueFieldDao : QueueFieldDao
     abstract val cacheMetaDao : CacheMetaDao
+    abstract val searchItemDao : SearchItemDao
 
 }

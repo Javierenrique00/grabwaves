@@ -9,6 +9,8 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
@@ -56,6 +58,7 @@ class SearchFragment : Fragment() {
     private lateinit var thumbnailApi : VideoInfoApi
     private lateinit var itemChangeApi: ItemChangeApi
     private lateinit var imageLoader : ImageLoader
+    private lateinit var searchStringAdapter : ArrayAdapter<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,6 +76,9 @@ class SearchFragment : Fragment() {
         view.cancelBt.setOnClickListener {
             searchTb.setText("")
         }
+        val listOption = listOf("sia","kiss","lorde")
+        searchStringAdapter = ArrayAdapter(context!!,R.layout.support_simple_spinner_dropdown_item,listOption)
+        view.searchTb.setAdapter(searchStringAdapter)
 
         view.backBt.setOnClickListener {
             val lastIndex = viewModel.recVideoList.size -1
@@ -107,7 +113,17 @@ class SearchFragment : Fragment() {
         pref = AppPreferences(context!!)
 
         searchTextApi = SearchTextApi()
-        val searchTextFlow = flowFromString(searchTextApi).buffer(Channel.UNLIMITED).debounce(500).retry(3){ cause ->
+        val searchTextFlow = flowFromString(searchTextApi)
+            .buffer(Channel.UNLIMITED)
+            .map {
+                updateSearchSugerencias(it)
+                it
+            }
+            .debounce(500)
+            .map {
+            viewModel.insertSearchItem(it)
+            it
+        }.retry(3){ cause ->
             if (cause is IOException) {
                 viewModel.showToastMessage.postValue(getString(R.string.msgRetryIOException))
                 Log.e("msg","Exepcion - DELAY/2000")
@@ -146,6 +162,15 @@ class SearchFragment : Fragment() {
         viewModel.showToastMessage.observe(viewLifecycleOwner, Observer {
             sendToast(it)
         })
+
+        viewModel.sugerenciasList.observe(viewLifecycleOwner, Observer {
+            Log.v("msg","---Llegó la lista size=${it.size}")
+            val newList = mutableListOf<String>()
+            it.forEach { newList.add(it.busqueda) }
+            searchStringAdapter.clear()
+            searchStringAdapter.addAll(newList)
+        })
+
     }
 
     val tw = object : TextWatcher {
@@ -327,5 +352,10 @@ class SearchFragment : Fragment() {
             }
         }
     }
+
+    fun updateSearchSugerencias(input:String){
+        viewModel.listSearchItems(input)
+    }
+
 
 }

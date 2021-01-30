@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mundocrativo.javier.solosonido.library.MediaHelper
+import com.mundocrativo.javier.solosonido.model.SearchItem
 import com.mundocrativo.javier.solosonido.model.VideoObj
 import com.mundocrativo.javier.solosonido.rep.AppRepository
 import com.squareup.moshi.internal.Util
@@ -20,15 +21,8 @@ class SearchViewModel(val appRepository: AppRepository) : ViewModel(){
     lateinit var videoLista : MutableList<VideoObj>
     val recVideoList = mutableListOf<List<VideoObj>>()
     val showToastMessage : MutableLiveData<String> by lazy { MutableLiveData<String>() }
+    val sugerenciasList : MutableLiveData<List<SearchItem>> by lazy { MutableLiveData<List<SearchItem>>() }
 
-
-//    fun getSearchData(searchURL:String)=viewModelScope.launch(Dispatchers.IO){
-//        //Log.v("msg","Search URL: $searchURL")
-//        val data = appRepository.getSearchFromUrl(searchURL)
-//        //Log.v("msg","Resultados.size=${data.size}")
-//        videoLista = data.toMutableList()
-//        videoListLiveData.postValue(videoLista)
-//    }
 
     suspend fun getSearchData(searchURL:String):List<VideoObj> = coroutineScope {
         Log.v("msg","Search URL: $searchURL")
@@ -88,5 +82,17 @@ class SearchViewModel(val appRepository: AppRepository) : ViewModel(){
     }
 
     fun isVideolistInitialized() = this::videoLista.isInitialized
+
+    fun insertSearchItem(inputValue:String) = viewModelScope.launch(Dispatchers.IO) {
+        if(inputValue.length>1){
+            appRepository.purgarSearchDB()
+            Log.v("msg","--> Inserting to DB $inputValue")
+            appRepository.insertSearchItemDB(inputValue)
+        }
+    }
+
+    fun listSearchItems(inputField:String) = viewModelScope.launch(Dispatchers.IO) {
+        sugerenciasList.postValue(appRepository.listSearchDB(inputField))
+    }
 
 }

@@ -10,10 +10,7 @@ import com.mundocrativo.javier.solosonido.com.CacheMetaDao
 import com.mundocrativo.javier.solosonido.com.CacheStrDao
 import com.mundocrativo.javier.solosonido.com.DirectCache
 import com.mundocrativo.javier.solosonido.com.MetadataCache
-import com.mundocrativo.javier.solosonido.db.DataDatabase
-import com.mundocrativo.javier.solosonido.db.QueueDao
-import com.mundocrativo.javier.solosonido.db.QueueFieldDao
-import com.mundocrativo.javier.solosonido.db.VideoDao
+import com.mundocrativo.javier.solosonido.db.*
 import com.mundocrativo.javier.solosonido.model.CacheMetaStr
 import com.mundocrativo.javier.solosonido.model.CacheStr
 import com.mundocrativo.javier.solosonido.rep.AppRepository
@@ -55,6 +52,10 @@ val appModule = module {
         return database.cacheMetaDao
     }
 
+    fun provideSearchItemDao(database: DataDatabase):SearchItemDao {
+        return  database.searchItemDao
+    }
+
     //--- instancia de la base de datos
     single { provideDatabase(androidApplication()) }
 
@@ -72,6 +73,9 @@ val appModule = module {
 
     //--- instancia CacheMetaDao
     single { provideCacheMetaDao(get()) }
+
+    //--- instancia SearchItemDao
+    single { provideSearchItemDao(get()) }
 
 
     fun provideDirectCache(cacheStrDao: CacheStrDao):DirectCache{
@@ -118,11 +122,11 @@ val appModule = module {
 
     single { provideCoilImageLoader(get()) }
 
-    fun provideAppRepository(videoDao: VideoDao,directCache: DirectCache,musicServiceConnection: MusicServiceConnection,queueDao: QueueDao,queueFieldDao: QueueFieldDao,metaCache:MetadataCache,coilImageLoader:ImageLoader):AppRepository {
-        return AppRepository(videoDao,directCache,musicServiceConnection,queueDao,queueFieldDao,metaCache,coilImageLoader)
+    fun provideAppRepository(videoDao: VideoDao,directCache: DirectCache,musicServiceConnection: MusicServiceConnection,queueDao: QueueDao,queueFieldDao: QueueFieldDao,searchItemDao:SearchItemDao,metaCache:MetadataCache,coilImageLoader:ImageLoader):AppRepository {
+        return AppRepository(videoDao,directCache,musicServiceConnection,queueDao,queueFieldDao,searchItemDao,metaCache,coilImageLoader)
     }
 
-    single { provideAppRepository(get(),get(),get(),get(),get(),get(),get()) }
+    single { provideAppRepository(get(),get(),get(),get(),get(),get(),get(),get()) }
 
 }
 
