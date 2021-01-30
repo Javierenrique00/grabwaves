@@ -59,6 +59,7 @@ class SearchFragment : Fragment() {
     private lateinit var itemChangeApi: ItemChangeApi
     private lateinit var imageLoader : ImageLoader
     private lateinit var searchStringAdapter : ArrayAdapter<String>
+    private lateinit var autoCompleteTB : AutoCompleteTextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,9 +77,7 @@ class SearchFragment : Fragment() {
         view.cancelBt.setOnClickListener {
             searchTb.setText("")
         }
-        val listOption = listOf("sia","kiss","lorde")
-        searchStringAdapter = ArrayAdapter(context!!,R.layout.support_simple_spinner_dropdown_item,listOption)
-        view.searchTb.setAdapter(searchStringAdapter)
+        autoCompleteTB = view.searchTb
 
         view.backBt.setOnClickListener {
             val lastIndex = viewModel.recVideoList.size -1
@@ -114,20 +113,18 @@ class SearchFragment : Fragment() {
 
         searchTextApi = SearchTextApi()
         val searchTextFlow = flowFromString(searchTextApi)
+            .map { it.toLowerCase()}
             .buffer(Channel.UNLIMITED)
-            .map {
-                updateSearchSugerencias(it)
-                it
-            }
             .debounce(500)
             .map {
-            viewModel.insertSearchItem(it)
-            it
+                viewModel.insertSearchItem(it)
+                insertSearchStringAutoTb(it)
+                it
         }.retry(3){ cause ->
             if (cause is IOException) {
                 viewModel.showToastMessage.postValue(getString(R.string.msgRetryIOException))
-                Log.e("msg","Exepcion - DELAY/2000")
-                delay(2000)
+                Log.e("msg","Exepcion - DELAY/1000")
+                delay(1000)
                 return@retry true
             } else {
                 return@retry false
@@ -135,18 +132,14 @@ class SearchFragment : Fragment() {
         }.map { value ->
             viewModel.getSearchData(createUrlConnectionStringSearch(pref.server,value,50)) }
 
-//        lifecycleScope.launch {
-//            searchTextFlow.collect{ value ->
-//                //Log.v("msg","ValorString = $value")
-//                if(value.length>2) viewModel.getSearchData(createUrlConnectionStringSearch(pref.server,value,50))
-//            }
-//        }
 
         lifecycleScope.launch(Dispatchers.IO) {
             searchTextFlow.collect{ lista ->
                 Log.v("msg","ListaSize = ${lista.size}")
-                viewModel.videoLista = lista.toMutableList()
-                viewModel.videoListLiveData.postValue(lista)
+                if(lista.size>0){
+                    viewModel.videoLista = lista.toMutableList()
+                    viewModel.videoListLiveData.postValue(lista)
+                }
             }
         }
 
@@ -163,13 +156,15 @@ class SearchFragment : Fragment() {
             sendToast(it)
         })
 
-        viewModel.sugerenciasList.observe(viewLifecycleOwner, Observer {
-            Log.v("msg","---Llegó la lista size=${it.size}")
-            val newList = mutableListOf<String>()
-            it.forEach { newList.add(it.busqueda) }
-            searchStringAdapter.clear()
-            searchStringAdapter.addAll(newList)
+        viewModel.sugerenciasList.observe(viewLifecycleOwner, Observer { sugerenciasList ->
+            Log.v("msg","---Cargando la lista de sugerencias size=${sugerenciasList.size}")
+
+            val listOption = mutableListOf<String>()
+            sugerenciasList.forEach { listOption.add(it.busqueda) }
+            searchStringAdapter = ArrayAdapter(context!!,R.layout.support_simple_spinner_dropdown_item,listOption)
+            autoCompleteTB.setAdapter(searchStringAdapter)
         })
+        viewModel.getAllSearchItemsDB()
 
     }
 
@@ -353,8 +348,14 @@ class SearchFragment : Fragment() {
         }
     }
 
-    fun updateSearchSugerencias(input:String){
-        viewModel.listSearchItems(input)
+
+    fun insertSearchStringAutoTb(lineStr:String){
+        lifecycleScope.launch(Dispatchers.Main) {
+            if(lineStr.length>1){
+                val pos = searchStringAdapter.getPosition(lineStr)
+                if(pos<0) searchStringAdapter.add(lineStr)
+            }
+        }
     }
 
 

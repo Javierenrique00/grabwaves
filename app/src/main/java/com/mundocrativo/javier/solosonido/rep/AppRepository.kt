@@ -315,16 +315,16 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
         }
     }
 
-    fun listSearchDB(inputValue: String):List<SearchItem>{
-        return searchItemDao.buscar(inputValue)
-    }
-
     fun purgarSearchDB(){
         val listaCompleta = searchItemDao.listaTodos()
         if(listaCompleta.size> MAX_SEARCH_LIST_SIZE){
             val qToDelete = listaCompleta.size - MAX_SEARCH_LIST_SIZE
             listaCompleta.take(qToDelete).map { searchItemDao.delete(it) }
         }
+    }
+
+    fun loadSearchCompleteListDB():List<SearchItem>{
+        return searchItemDao.listaTodos()
     }
 
 }

@@ -85,14 +85,14 @@ class SearchViewModel(val appRepository: AppRepository) : ViewModel(){
 
     fun insertSearchItem(inputValue:String) = viewModelScope.launch(Dispatchers.IO) {
         if(inputValue.length>1){
-            appRepository.purgarSearchDB()
             Log.v("msg","--> Inserting to DB $inputValue")
             appRepository.insertSearchItemDB(inputValue)
         }
     }
 
-    fun listSearchItems(inputField:String) = viewModelScope.launch(Dispatchers.IO) {
-        sugerenciasList.postValue(appRepository.listSearchDB(inputField))
+    fun getAllSearchItemsDB() = viewModelScope.launch(Dispatchers.IO) {
+        appRepository.purgarSearchDB()
+        sugerenciasList.postValue(appRepository.loadSearchCompleteListDB())
     }
 
 }

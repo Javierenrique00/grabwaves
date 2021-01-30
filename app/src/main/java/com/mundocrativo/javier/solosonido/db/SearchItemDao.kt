@@ -9,8 +9,8 @@ interface SearchItemDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(item:SearchItem):Long
 
-    @Query("SELECT * FROM searchitem WHERE busqueda LIKE '%' || :inputStr || '%' LIMIT 6")
-    fun buscar(inputStr:String):List<SearchItem>
+//    @Query("SELECT * FROM searchitem WHERE busqueda LIKE '%' || :inputStr || '%' LIMIT 6")
+//    fun buscar(inputStr:String):List<SearchItem>
 
     @Query("SELECT * FROM searchitem WHERE busqueda=:inputStr")
     fun buscarExact(inputStr:String):List<SearchItem>
