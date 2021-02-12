@@ -66,6 +66,7 @@ class SearchViewModel(val appRepository: AppRepository) : ViewModel(){
                         0,
                         0,
                         "",0,
+                        "",
                         isInfoReady,
                         false,
                         false,

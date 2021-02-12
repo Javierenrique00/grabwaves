@@ -130,7 +130,7 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
                 0,
                 0,
                 0,
-                0,"",0,
+                0,"",0,"",
                 false,
                 false,
                 false,
@@ -224,7 +224,7 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
         playlist.items.forEach {
             resultList.add(
                 VideoObj(
-                0, it.url?:"",it.title?:"",it.author?:"",it.thumbnail?:"",0,0,it.duration,0, KIND_URL_VIDEO,0,"",0,true,false,false,0,null,false,""))
+                0, it.url?:"",it.title?:"",it.author?:"",it.thumbnail?:"",0,0,it.duration,0, KIND_URL_VIDEO,0,"",0,"",true,false,false,0,null,false,""))
         }
         return resultList
     }
@@ -281,9 +281,9 @@ class AppRepository(private val videoDao: VideoDao,private val directCache: Dire
         return null
     }
 
-    fun preloadSong(pref: AppPreferences,url: String):Int{
+    fun preloadSong(pref: AppPreferences,url: String,videoUrl:String):Int{
         Log.v("msg","Preloading:$url")
-        directCache.conexionServer(Util.createUrlConnectionStringPlay(pref.server,url,pref.hQ,pref.trans,true))?.let {resultado ->
+        directCache.conexionServer(Util.createUrlConnectionStringPlay(pref.server,url,pref.hQ,pref.trans,true,videoUrl))?.let {resultado ->
             return when(resultado){
                 "ready" -> PRELOAD_READY
                 "inprocess" -> PRELOAD_INPROCESS

@@ -82,8 +82,9 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
 
     fun getUrlInfo(position:Int,videoIn:VideoObj,ruta:String,pref: AppPreferences):Pair<Int,VideoObj>{
         val metaData = appRepository.getMetadataCache(videoIn.url) //--es posible encontrar en el cache esta metadata pero sin bitmap
-        val md5FileName = Util.md5FileName(pref,videoIn.url)
+        val isYoutube = Util.isYoutubeUrl(videoIn.url)
         metaData?.let {
+            val md5FileName = Util.md5FileName(pref,videoIn.url,it.extraUrlVideo,isYoutube)
             return Pair(position,VideoObj(
                 videoIn.id,
                 videoIn.url,
@@ -91,10 +92,11 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
                 it.artist,
                 it.thumbnailUrl,
                 0,0,it.duration,videoIn.timestamp,9,9,md5FileName,
-                servState(md5FileName),true,false,false,0,null,false,"ºº"))
+                servState(md5FileName),it.extraUrlVideo,true,false,false,0,null,false,"ºº"))
         }
         val info = appRepository.getInfoFromUrl(ruta)
         info?.let {
+            val md5FileName = Util.md5FileName(pref,videoIn.url,it.thumbnailUrl,isYoutube)
             return Pair(position,VideoObj(
                 videoIn.id,
                 videoIn.url,
@@ -109,6 +111,7 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
                 0,
                 md5FileName,
                 servState(md5FileName),
+                it.urlVideo,
                 true,
                 false,
                 false,
@@ -118,7 +121,7 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
                 ""
             ))
         }
-        return Pair(position,VideoObj(videoIn.id,videoIn.url,"---","---","",0,0,0,0,videoIn.kindMedia,0,md5FileName,servState(md5FileName),true,true,false,0,null,false,""))
+        return Pair(position,VideoObj(videoIn.id,videoIn.url,"---","---","",0,0,0,0,videoIn.kindMedia,0,"",SERV_STATE_IDLE,"",true,true,false,0,null,false,""))
     }
 
     fun getInfoNowPlaying(ruta:String)=viewModelScope.launch(Dispatchers.IO) {
@@ -138,7 +141,7 @@ class PlayerViewModel(val appRepository: AppRepository) : ViewModel(){
             var result :Int? = null
             val preloadFile = PreloadFile(pref,videoLista[index].duration,appRepository)
             launch {
-                result = preloadFile.preload(videoLista[index].url)
+                result = preloadFile.preload(videoLista[index].url,videoLista[index].extraUrlVideo)
             }
             loadConvertedFiles(pref)
             preloadFile.checkProgress {

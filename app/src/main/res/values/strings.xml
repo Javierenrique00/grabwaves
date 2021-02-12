@@ -14,6 +14,7 @@
     <string name="msgConfigServer">Por favor configure un servidor primero</string>
     <string name="msgRetryException">Retry exception</string>
     <string name="msgRetryIOException">Retry IOexception</string>
+    <string name="msgNotImplemented">Not Implemented</string>
 
 
     //--- Video item recyclerview

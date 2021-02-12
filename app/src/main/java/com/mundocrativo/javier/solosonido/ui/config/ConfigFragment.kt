@@ -39,7 +39,7 @@ class ConfigFragment : Fragment() {
 
         view.checkServerBt.setOnClickListener {
             //revizaServer(serverTb.text.toString(),"https://www.youtube.com/watch?v=kA9voL0edJU",false,false)
-            val urlToPlay = Util.createUrlConnectionStringPlay(serverTb.text.toString(),"https://www.youtube.com/watch?v=kA9voL0edJU",false,false,false)
+            val urlToPlay = Util.createUrlConnectionStringPlay(serverTb.text.toString(),"https://www.youtube.com/watch?v=kA9voL0edJU",false,false,false,"")
             launchNavigator(urlToPlay)
         }
 

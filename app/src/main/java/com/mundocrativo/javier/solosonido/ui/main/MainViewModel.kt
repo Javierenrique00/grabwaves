@@ -79,8 +79,9 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
         when(videoIn.kindMedia){
             KIND_URL_VIDEO ->{
                 val ruta = Util.transUrlToServInfo(videoIn.url,pref)
+                Log.v("msg","Get Info:$ruta")
                 val info = appRepository.getInfoFromUrl(ruta)
-                //Log.v("msg","Info-----------$info")
+                Log.v("msg","Info-----------$info")
                 info?.let {
                     return Pair(position,VideoObj(
                         videoIn.id,
@@ -94,6 +95,7 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
                         videoIn.timestamp,
                         videoIn.kindMedia,
                         0,"",0,
+                        it.urlVideo,
                         true,
                         false,
                         false,
@@ -182,9 +184,10 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
                             it.url,
                             it.title,
                             it.channel,
-                            Util.createUrlConnectionStringPlay(pref.server, it.url, pref.hQ,pref.trans,false),
+                            Util.createUrlConnectionStringPlay(pref.server, it.url, pref.hQ,pref.trans,false,it.extraUrlVideo),
                             it.thumbnailUrl,
-                            it.duration
+                            it.duration,
+                            it.extraUrlVideo
                         )
                     )
                 }
@@ -195,7 +198,7 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
                 var result :Int? = null
                 val preloadFile = PreloadFile(pref,audioList[0].duration,appRepository)
                 launch {
-                    result = preloadFile.preload(audioList[0].mediaId)
+                    result = preloadFile.preload(audioList[0].mediaId,audioList[0].extraUrlVideo)
                 }
 
                 preloadFile.checkProgress {
@@ -218,8 +221,6 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
                     showToastMessage.postValue("Error")
                 }
 
-
-
             }else{
                 //---Tenemos el audio list con toda la metadata
                 appRepository.putMetadataListCache(audioList)
@@ -233,7 +234,7 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
         }
     }
 
-    fun convToMp3(playVideoList:List<VideoObj>,pref:AppPreferences)= viewModelScope.launch(Dispatchers.IO){
+    fun convToMp3(playVideoList:List<VideoObj>,pref:AppPreferences,msgNotImplemented:String)= viewModelScope.launch(Dispatchers.IO){
 
         //---crea la lista de videos final agregando los videos de la playlist
         val finalVideoList = mutableListOf<VideoObj>()
@@ -244,18 +245,32 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
             }
         }
 
+        //---Esto es para verificar que solo se convierten videos de youtube, no de otras plataformas todo se puede quitar cuando se implemente en el server
+        var hasOther = false
         finalVideoList.forEach {
-            val mp3Conversion = PreloadFile(pref,it.duration,appRepository)
-            launch {
-                mp3Conversion.loadMp3(it.url)
-            }
-
-            mp3Conversion.checkProgress {
-                preloadProgress.postValue(it)
-            }
-
-            if(mp3Conversion.resultFileExists) download.postValue(it) //--- para hacer la solicitud de descarga
+            if(!Util.isYoutubeUrl(it.url)) hasOther = true
         }
+        if(!hasOther){
+
+            finalVideoList.forEach {
+                val mp3Conversion = PreloadFile(pref,it.duration,appRepository)
+                launch {
+                    mp3Conversion.loadMp3(it.url,it.extraUrlVideo)
+                }
+
+                mp3Conversion.checkProgress {
+                    preloadProgress.postValue(it)
+                }
+
+                if(mp3Conversion.resultFileExists) download.postValue(it) //--- para hacer la solicitud de descarga
+            }
+
+        }else{
+            showToastMessage.postValue(msgNotImplemented)
+        }
+
+
+
     }
 
 

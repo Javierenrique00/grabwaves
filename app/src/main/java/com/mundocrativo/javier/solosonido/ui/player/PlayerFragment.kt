@@ -125,8 +125,9 @@ class PlayerFragment : Fragment() {
             if(tama>0) {
                 val mediaId = it.description.mediaId
                 val titulo = it.description.title
+                val url = it.description.mediaUri
                 val metadataString = it.getString("METADATA_KEY_TITLE")
-                Log.v("msg","Now playing in fragment:${mediaId} | titulo=$titulo  metadataString=$metadataString")
+                Log.v("msg","Now playing in fragment:${mediaId} | titulo=$titulo | url=$url metadataString=$metadataString")
                 viewModel.getInfoNowPlaying(Util.transUrlToServInfo(mediaId!!,pref))
                 viewModel.sendPlayDuration() //--- lanza el comando de la duracion
                 updateSeekBar()  //-- para que haya un ciclo cada segundo para actualizar el seekbar
@@ -546,3 +547,4 @@ const val TIME_FOR_MOVE_ITEMS_UPDATE = 2000L   //---ms
 
 const val SERV_STATE_DOWNLADED = 2
 const val SERV_STATE_DOWNLOADING = 1
+const val SERV_STATE_IDLE = 0

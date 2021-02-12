@@ -10,6 +10,7 @@ data class InfoObj(
     val width : Int,
     val height : Int,
     val duration : Int,
+    val urlVideo : String,
     val related : List<Related>
 )
 

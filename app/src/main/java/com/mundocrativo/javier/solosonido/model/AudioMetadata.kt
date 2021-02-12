@@ -18,8 +18,9 @@ data class AudioMetadata(
     val artist : String,
     var url : String,
     val thumbnailUrl : String,
-    val duration: Int
+    val duration: Int,
+    val extraUrlVideo:String
 ) : Parcelable
 {
-    constructor() : this("","","","","",0)
+    constructor() : this("","","","","",0,"")
 }

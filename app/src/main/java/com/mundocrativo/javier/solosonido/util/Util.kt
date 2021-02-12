@@ -98,13 +98,15 @@ object Util {
         return  result
     }
 
-    fun createUrlConnectionStringPlay(server:String,videoLetras:String,hQ:Boolean,trans:Boolean,preload:Boolean):String {
-        val videoBase64 = Util.convStringToBase64(videoLetras)
+    fun createUrlConnectionStringPlay(server:String,videoLetras:String,hQ:Boolean,trans:Boolean,preload:Boolean,extraUrlVideo:String):String {0
+        val isYoutube = isYoutubeUrl(videoLetras)
+        val transBit = trans or (!isYoutube)
+        val videoBase64 = if(isYoutube) Util.convStringToBase64(videoLetras) else Util.convStringToBase64(extraUrlVideo)
         val quality = if(hQ) "hq" else "lq"
-        val tranStr = if(trans) "true" else "false"
+        val tranStr = if(transBit) "true" else "false"
         val preStr = if(preload) "true" else "false"
         val ruta = server + "/?link="+videoBase64+"&q=$quality"+"&tran=$tranStr"+"&pre=$preStr"
-        //Log.v("msg","Contactando streaming:$ruta")
+        Log.v("msg","Contactando streaming:$ruta")
         return ruta
     }
 
@@ -140,14 +142,15 @@ object Util {
         return pref.server + "/tomp3?link=" + convStringToBase64(url)
     }
 
-    fun createDownloadLink(pref:AppPreferences,url:String):String{
-        val file = md5FileName(pref,url)
-        val hasFile = "?file=$file"
-        return pref.server + "/download" + hasFile
-    }
+//    fun createDownloadLink(pref:AppPreferences,url:String):String{
+//        val file = md5FileName(pref,url)
+//        val hasFile = "?file=$file"
+//        return pref.server + "/download" + hasFile
+//    }
 
-    fun createMp3DownloadLink(pref: AppPreferences,url: String):String{
-        return pref.server + "/download?file=" + md5Mp3Filename(url)
+    fun createMp3DownloadLink(pref: AppPreferences,url: String,extraUrl: String):String{
+        val isYoutube = isYoutubeUrl(url)
+        return pref.server + "/download?file=" + md5Mp3Filename(url,extraUrl,isYoutube)
     }
 
 
@@ -206,14 +209,18 @@ object Util {
         return hexArray.fold("", { acc, byte -> acc + (byte.toUByte()).toString(16).padStart(2,'0') })
     }
 
-    fun md5FileName(pref: AppPreferences,name: String):String{
+    fun md5FileName(pref: AppPreferences,name: String,extraUrl:String,isYoutube:Boolean):String{
+        val toTrans = pref.trans or !isYoutube
+        val putUrl = if(isYoutube) name else extraUrl
         val quality = if(pref.hQ) "hq" else "lq"
-        val transcode = if(pref.trans) "t" else "f"
-        return hexMd5Checksum(name)+"$quality$transcode.opus"
+        val transcode = if(toTrans) "t" else "f"
+        val ext = if(toTrans) ".mp3" else ".opus"
+        return hexMd5Checksum(putUrl)+"$quality$transcode$ext"
     }
 
-    fun md5Mp3Filename(name: String):String{
-        return hexMd5Checksum(name)+".mp3"
+    fun md5Mp3Filename(name: String,extraUrl:String,isYoutube:Boolean):String{
+        val newName = if(isYoutube) name else extraUrl
+        return hexMd5Checksum(newName)+".mp3"
     }
 
 
@@ -224,5 +231,16 @@ object Util {
         val digitGroups = (Math.log10(size.toDouble()) / Math.log10(1024.0)).toInt()
         return DecimalFormat("#,##0.#").format(size / Math.pow(1024.0, digitGroups.toDouble())) + " " + units[digitGroups]
     }
+
+    fun isYoutubeUrl(url:String):Boolean{
+        var isYoutube = false
+        youtubeUrls.forEach {
+            if(url.contains(it)) isYoutube = true
+        }
+        return isYoutube
+    }
+
+    val youtubeUrls = arrayOf("youtube.com","youtu.be","y2u.be")
+
 
 }

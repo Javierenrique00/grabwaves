@@ -17,16 +17,20 @@ class PreloadFile(private val pref:AppPreferences,private val fullDurationMs:Int
     var filename = ""
     var resultFileExists = false
 
-    fun preload(url:String):Int?{
-        filename = Util.md5FileName(pref,url)
-        this.url = url
-        result = appRepository.preloadSong(pref,url)
+
+    fun preload(url:String,videoUrl:String):Int?{
+        val isYoutube = Util.isYoutubeUrl(url)
+        filename = Util.md5FileName(pref,url,videoUrl,isYoutube)
+        this.url = if(isYoutube) url else videoUrl
+        result = appRepository.preloadSong(pref,url,videoUrl)
         return result
     }
 
-    fun loadMp3(url:String):Int{
-        filename = Util.md5Mp3Filename(url)
-        this.url = url
+
+    fun loadMp3(url:String,videoUrl:String):Int{
+        val isYoutube = Util.isYoutubeUrl(url)
+        filename = Util.md5Mp3Filename(url,videoUrl,isYoutube)
+        this.url = if(isYoutube) url else videoUrl
         return appRepository.askForMp3Conversion(Util.createMp3Link(pref,url))
     }
 

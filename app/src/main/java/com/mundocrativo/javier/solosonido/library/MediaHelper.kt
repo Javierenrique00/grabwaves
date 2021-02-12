@@ -88,6 +88,7 @@ object MediaHelper {
             0,
             0,
             "",0,
+            mediaItem.description.mediaId?:"",
             false,
             false,
             false,

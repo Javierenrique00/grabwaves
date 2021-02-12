@@ -362,6 +362,7 @@ class HistoriaFragment : Fragment() {
                 viewModel.videoLista[index].duration= item.duration
                 viewModel.videoLista[index].total_items = item.total_items
                 viewModel.videoLista[index].kindMedia = item.kindMedia
+                viewModel.videoLista[index].extraUrlVideo = item.extraUrlVideo
 
                 videoListDataAdapter.notifyItemChanged(index,viewModel.videoLista[index])
     }
@@ -405,7 +406,7 @@ class HistoriaFragment : Fragment() {
                 SEL_END -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_ADD,videoListToPlay,pref,msg)
                 SEL_NEW -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_NEW,videoListToPlay,pref,msg)
                 SEL_NEXT -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_NEXT,videoListToPlay,pref,msg)
-                SEL_DOWNLOAD -> viewModel.convToMp3(videoListToPlay,pref)
+                SEL_DOWNLOAD -> viewModel.convToMp3(videoListToPlay,pref,getString(R.string.msgNotImplemented))
             }
 
         }.apply { show(ft,"selection") }
@@ -441,7 +442,7 @@ class HistoriaFragment : Fragment() {
     fun createDownloadMannagerRequest(song:VideoObj){
         val url = song.url
         Log.v("msg","Download url=$")
-        val urlPath = Util.createMp3DownloadLink(pref,url)
+        val urlPath = Util.createMp3DownloadLink(pref,url,song.extraUrlVideo)
         Log.v("msg","path:->$urlPath")
 
         //val filePath = "file://" + getMusicPath() + File.separator + Util.md5Mp3Filename(url)

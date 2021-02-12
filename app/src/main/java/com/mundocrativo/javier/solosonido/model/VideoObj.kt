@@ -22,6 +22,7 @@ data class VideoObj(
     var total_items:Int,  //---cantidad de videos en la lista
     var urlMd5:String,
     var servState:Int,
+    var extraUrlVideo:String,
     @Ignore var esInfoReady:Boolean,
     @Ignore var esUrlReady:Boolean,
     @Ignore var esSelected:Boolean,
@@ -31,8 +32,8 @@ data class VideoObj(
     @Ignore var durationStr:String
 
 ){
-    constructor() : this(0,"","","","",0,0,0,0L,0,0,"",0,false,false,false,0,null,false,"")
+    constructor() : this(0,"","","","",0,0,0,0L,0,0,"",0,"",false,false,false,0,null,false,"")
 
     constructor(url:String) : this(0,url,"","","",0,0,0,0L,0,0,
-        "",0,false,false,false,0,null,false,"")
+        "",0,"",false,false,false,0,null,false,"")
 }
