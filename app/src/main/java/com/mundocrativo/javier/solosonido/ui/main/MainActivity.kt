@@ -35,10 +35,11 @@ class MainActivity : AppCompatActivity() {
         getDataFromIntent()
     }
 
-    fun getDataFromIntent(){
+    fun getDataFromIntent(paramIntent:Intent?=null){
         //--- trae el dato del enlace
         val extras = intent.extras
-        val enlace = extras?.getString(Intent.EXTRA_TEXT)
+        var enlace = extras?.getString(Intent.EXTRA_TEXT)
+        if(paramIntent!=null) enlace = paramIntent.extras!!.getString(Intent.EXTRA_TEXT)
         enlace?.let {
             //Log.v("msg","Enlace = $it")
             lifecycleScope.launch {
