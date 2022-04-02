@@ -20,6 +20,7 @@ class SelectionDialogFragment(val funcSel:(sel:Int)->Unit) : DialogFragment() {
         view.queueNewSelBt.setOnClickListener { funcSel(SEL_NEW);dismiss() }
         view.queueAddBt.setOnClickListener {  funcSel(SEL_END);dismiss() }
         view.queueNextBt.setOnClickListener { funcSel(SEL_NEXT);dismiss() }
+        view.playNowBt.setOnClickListener { funcSel(SEL_PLAYNOW);dismiss() }
         view.downloadBt.setOnClickListener { funcSel(SEL_DOWNLOAD);dismiss() }
         view.cancelSelBt.setOnClickListener { dismiss() }
         return view
@@ -35,3 +36,4 @@ const val SEL_NEW = 0
 const val SEL_NEXT = 1
 const val SEL_END = 2
 const val SEL_DOWNLOAD = 3
+const val SEL_PLAYNOW = 4

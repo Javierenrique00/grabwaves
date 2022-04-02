@@ -18,12 +18,11 @@ import com.mundocrativo.javier.solosonido.model.ProgressInfo
 import com.mundocrativo.javier.solosonido.model.VideoObj
 import com.mundocrativo.javier.solosonido.rep.AppRepository
 import com.mundocrativo.javier.solosonido.ui.historia.*
-import com.mundocrativo.javier.solosonido.util.AppPreferences
-import com.mundocrativo.javier.solosonido.util.PreloadFile
-import com.mundocrativo.javier.solosonido.util.Util
+import com.mundocrativo.javier.solosonido.util.*
 import com.soywiz.klock.DateTime
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.*
+import java.lang.Exception
 
 class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
 
@@ -232,6 +231,58 @@ class MainViewModel(private val appRepository: AppRepository) : ViewModel() {
             }
 
         }
+    }
+
+    fun launchPlayerDirect(queueCmd:Int,playVideoList:List<VideoObj>,pref:AppPreferences,msgPreload:String)=viewModelScope.launch(Dispatchers.IO){
+
+        //---crea la lista de videos final agregando los videos de la playlist
+        val finalVideoList = mutableListOf<VideoObj>()
+        playVideoList.forEach { video ->
+            when(Util.checkKindLink(video.url)){
+                KIND_URL_VIDEO -> finalVideoList.add(video)
+                KIND_URL_PLAYLIST -> finalVideoList.addAll(appRepository.getPlayListFromUrl(Util.transUrlToServePlaylist(video.url,pref)))
+            }
+        }
+
+
+        //--Ahora la lista para el exoplayer
+        val audioList = ArrayList<AudioMetadata>()
+        finalVideoList.forEach {
+                val streamUrl = getOnlySoundUrl(pref,it.url)
+                if(streamUrl!=null){
+                    audioList.add(
+                        AudioMetadata(
+                            it.url,
+                            it.title,
+                            it.channel,
+                            streamUrl,
+                            it.thumbnailUrl,
+                            it.duration,
+                            it.extraUrlVideo
+                        )
+                    )
+                }
+        }
+
+        //Envía la lista al Exoplayer
+        showToastMessage.postValue(msgPreload)
+        //---Tenemos el audio list con toda la metadata
+        withContext(Dispatchers.Main){
+            if(audioList.size>0) MediaHelper.cmdSendListToPlayer(queueCmd,0,audioList,musicServiceConnection)
+        }
+    }
+
+    fun getOnlySoundUrl(pref: AppPreferences,videoUrl:String):String?{
+        var salida : String? = null
+        val result = OkGetFileUrl.traeWebString(Util.getYtbUrl(pref,videoUrl))
+        result?.let { result ->
+            if(result.length>20){
+                val decodedUrl = Base58.decode(result).toString(Charsets.UTF_8)
+                Log.v("msg","Decoded URL=${decodedUrl}")
+                salida = decodedUrl
+            }
+        }
+        return salida
     }
 
     fun convToMp3(playVideoList:List<VideoObj>,pref:AppPreferences,msgNotImplemented:String)= viewModelScope.launch(Dispatchers.IO){

@@ -26,4 +26,5 @@
     <string name="generic_error">La aplicación encontró un error inesperado.</string>
     <string name="msgPlayListError">Error en playlist</string>
     <string name="msgConfigServer">Por favor configure un servidor primero</string>
+    <string name="playNow">Tocar ahora</string>
 </resources>

@@ -27,6 +27,10 @@ object Util {
         return remplazo2
     }
 
+    fun convStringToBase58(texto:String):String{
+        return Base58.encode(texto.toByteArray(Charsets.UTF_8))
+    }
+
     fun calcDeltaTiempo(time1:Long,time2:Long):String{
         var tiempo = time2 - time1
         var sec = tiempo
@@ -110,6 +114,14 @@ object Util {
         return ruta
     }
 
+    fun createUrlConnectionStringPlayDirect(server:String,videoLetras:String,hQ:Boolean,trans:Boolean,preload:Boolean,extraUrlVideo:String):String {0
+        //val isYoutube = isYoutubeUrl(videoLetras)
+        val videoBase58 = convStringToBase58(videoLetras)
+        val ruta = "http://66.152.191.10:3555/conv?link=${videoBase58}"
+        Log.v("msg","Contactando streaming:$ruta")
+        return ruta
+    }
+
     fun createUrlConnectionStringSearch(server:String,searchLetras:String,limit:Int):String {
         val videoBase64 = convStringToBase64(searchLetras)
         val ruta = server + "/search/?question="+videoBase64+"&limit=$limit"
@@ -158,6 +170,10 @@ object Util {
         return "https://www.youtube.com/watch?v=$videoId"
     }
 
+    fun getYtbUrl(pref: AppPreferences,ytbLink:String) : String{
+        val base58Encoded = Base58.encode(ytbLink.toByteArray(Charsets.UTF_8))
+        return pref.server + "/playnow?link=${base58Encoded}"
+    }
 
     fun clickAnimator(view: View){
         val animator =ValueAnimator.ofFloat(1f,1.8f,1f).apply {

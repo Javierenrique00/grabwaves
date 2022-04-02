@@ -26,4 +26,5 @@
     <string name="messageQueue">What to do with the music queue</string>
     <string name="msgConfigServer">Please set up a server first</string>
     <string name="msgPlayListError">Playlist error</string>
+    <string name="playNow">Play now</string>
 </resources>

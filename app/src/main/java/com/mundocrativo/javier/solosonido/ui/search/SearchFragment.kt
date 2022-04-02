@@ -296,7 +296,7 @@ class SearchFragment : Fragment() {
             .setMessage(getString(R.string.messageQueue))
             .setPositiveButton(getString(R.string.queueAdd)) { p0, p1 -> viewModel.openVideoItem(MediaHelper.QUEUE_ADD,item) }
             .setNegativeButton(getString(R.string.queueNew)) { p0, p1 -> viewModel.openVideoItem(MediaHelper.QUEUE_NEW,item) }
-            .setNeutralButton(getString(R.string.queueNext)) { p0, p1 -> viewModel.openVideoItem(MediaHelper.QUEUE_NEXT,item) }
+            .setNeutralButton(getString(R.string.playNow)) { p0, p1 -> viewModel.openVideoItem(MediaHelper.QUEUE_NEXT,item) }
         val dialog =builder.create()
         dialog.show()
     }
@@ -308,7 +308,7 @@ class SearchFragment : Fragment() {
             .setMessage(getString(R.string.messageQueue))
             .setPositiveButton(getString(R.string.queueAdd)) { p0, p1 -> viewModel.playSelectedVideo(MediaHelper.QUEUE_ADD) }
             .setNegativeButton(getString(R.string.queueNew)) { p0, p1 -> viewModel.playSelectedVideo(MediaHelper.QUEUE_NEW) }
-            .setNeutralButton(getString(R.string.queueNext)) { p0, p1 -> viewModel.playSelectedVideo(MediaHelper.QUEUE_NEXT) }
+            .setNeutralButton(getString(R.string.playNow)) { p0, p1 -> viewModel.playSelectedVideo(MediaHelper.QUEUE_NEXT) }
         val dialog =builder.create()
         dialog.show()
     }

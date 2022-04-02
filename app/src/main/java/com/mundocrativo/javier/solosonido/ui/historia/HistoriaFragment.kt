@@ -29,6 +29,7 @@ import coil.request.ImageRequest
 import com.mundocrativo.javier.solosonido.BuildConfig
 import com.mundocrativo.javier.solosonido.R
 import com.mundocrativo.javier.solosonido.library.MediaHelper
+import com.mundocrativo.javier.solosonido.model.QueueObj
 import com.mundocrativo.javier.solosonido.model.VideoObj
 import com.mundocrativo.javier.solosonido.ui.config.ConfigActivity
 import com.mundocrativo.javier.solosonido.ui.main.*
@@ -144,8 +145,13 @@ class HistoriaFragment : Fragment() {
             //Log.v("msg","Send video List to player")
             if(!detectVideoListEqual(it.second,viewModel.lastListOpenUrl)){
                 var queueCmd = it.first
-                if(it.first!=MediaHelper.QUEUE_NEW_NOSAVE) it.second.forEach { video -> insertItemAtTopList(Pair(it.first,video.url)) } else queueCmd = MediaHelper.QUEUE_NEW
-                viewModel.launchPlayerMultiple(queueCmd,it.second,pref,getString(R.string.msgPlaying))
+                if(queueCmd==MediaHelper.QUEUE_NEXT) {
+                    viewModel.launchPlayerDirect(MediaHelper.QUEUE_NEW,it.second,pref,getString(R.string.msgPlaying))
+                }else{
+                    if(it.first!=MediaHelper.QUEUE_NEW_NOSAVE) it.second.forEach { video -> insertItemAtTopList(Pair(it.first,video.url)) } else queueCmd = MediaHelper.QUEUE_NEW
+                    viewModel.launchPlayerMultiple(queueCmd,it.second,pref,getString(R.string.msgPlaying))
+                }
+
             }
         })
 
@@ -406,6 +412,7 @@ class HistoriaFragment : Fragment() {
                 SEL_END -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_ADD,videoListToPlay,pref,msg)
                 SEL_NEW -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_NEW,videoListToPlay,pref,msg)
                 SEL_NEXT -> viewModel.launchPlayerMultiple(MediaHelper.QUEUE_NEXT,videoListToPlay,pref,msg)
+                SEL_PLAYNOW -> viewModel.launchPlayerDirect(MediaHelper.QUEUE_NEW,videoListToPlay,pref,msg)
                 SEL_DOWNLOAD -> viewModel.convToMp3(videoListToPlay,pref,getString(R.string.msgNotImplemented))
             }
 
